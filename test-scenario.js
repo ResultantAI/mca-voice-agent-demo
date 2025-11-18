@@ -12,6 +12,7 @@
  * Options:
  *   --payload <file>   Run test with specific payload
  *   --all              Run all tests in test-payloads/
+ *   --interactive      Interactive mode - answer questions in real-time
  *   --verbose          Show detailed output
  *   --debug            Show debug information
  *
@@ -19,10 +20,12 @@
  *   node test-scenario.js inbound_qualifier.json
  *   node test-scenario.js inbound_qualifier.json --payload test-payloads/qualified.json
  *   node test-scenario.js inbound_qualifier.json --all --verbose
+ *   node test-scenario.js inbound_qualifier.json --interactive
  */
 
 const fs = require('fs');
 const path = require('path');
+const readline = require('readline');
 
 // ANSI color codes for terminal output
 const colors = {
@@ -44,6 +47,7 @@ const schemaFile = args[0];
 const options = {
   payload: null,
   all: args.includes('--all'),
+  interactive: args.includes('--interactive'),
   verbose: args.includes('--verbose'),
   debug: args.includes('--debug')
 };
@@ -111,6 +115,7 @@ function showUsage() {
   console.log('Options:');
   console.log('  --payload <file>   Run test with specific payload');
   console.log('  --all              Run all tests in test-payloads/');
+  console.log('  --interactive      Interactive mode - answer questions in real-time');
   console.log('  --verbose          Show detailed output');
   console.log('  --debug            Show debug information');
   console.log('');
@@ -118,6 +123,7 @@ function showUsage() {
   console.log('  node test-scenario.js inbound_qualifier.json');
   console.log('  node test-scenario.js inbound_qualifier.json --payload test-payloads/qualified.json');
   console.log('  node test-scenario.js inbound_qualifier.json --all --verbose');
+  console.log('  node test-scenario.js inbound_qualifier.json --interactive');
   console.log('');
 }
 
@@ -463,9 +469,203 @@ function runTest(config, testPayload, testName) {
 }
 
 /**
+ * Run interactive mode - ask questions and collect responses
+ */
+async function runInteractive(config) {
+  printHeader('Interactive Qualification Test');
+
+  print('🎤 AI Voice Agent Simulation', 'cyan');
+  console.log('');
+  info('Answer the questions below as if you were a customer calling about MCA funding.');
+  console.log('');
+
+  // Create readline interface
+  const rl = readline.createInterface({
+    input: process.stdin,
+    output: process.stdout
+  });
+
+  // Promisify question
+  const question = (query) => new Promise((resolve) => rl.question(query, resolve));
+
+  const responses = {};
+
+  // Show greeting
+  if (config.conversation_flow.greeting && config.conversation_flow.greeting.script) {
+    print('AI Agent:', 'cyan');
+    console.log(`  "${config.conversation_flow.greeting.script}"`);
+    console.log('');
+  }
+
+  // Ask each question
+  const questions = config.conversation_flow.questions || [];
+
+  for (let i = 0; i < questions.length; i++) {
+    const q = questions[i];
+
+    // Replace variables in question text
+    let questionText = q.question;
+    Object.keys(responses).forEach(key => {
+      questionText = questionText.replace(`{{${key}}}`, responses[key]);
+    });
+
+    print(`Question ${i + 1}/${questions.length}:`, 'bright');
+    print(`AI: ${questionText}`, 'cyan');
+
+    // Show validation hints
+    if (q.validation) {
+      const hints = [];
+      if (q.validation.min !== undefined) hints.push(`min: ${q.validation.min}`);
+      if (q.validation.max !== undefined) hints.push(`max: ${q.validation.max}`);
+      if (q.validation.choices) hints.push(`choices: ${q.validation.choices.join(', ')}`);
+
+      if (hints.length > 0) {
+        print(`    [${q.type} - ${hints.join(', ')}]`, 'dim');
+      } else {
+        print(`    [${q.type}${q.required ? ' - required' : ''}]`, 'dim');
+      }
+    }
+
+    // Get answer
+    const answer = await question(`${colors.green}You: ${colors.reset}`);
+    console.log('');
+
+    // Store response
+    if (answer.trim()) {
+      // Convert based on type
+      switch (q.type) {
+        case 'number':
+        case 'currency':
+          responses[q.field] = parseFloat(answer) || answer;
+          break;
+        case 'boolean':
+          responses[q.field] = answer.toLowerCase().includes('yes') || answer.toLowerCase().includes('true');
+          break;
+        default:
+          responses[q.field] = answer;
+      }
+    }
+
+    // Check follow-up conditions (simplified)
+    if (q.follow_up && q.follow_up.question_id) {
+      // Find and ask follow-up question if needed
+      const followUpQ = questions.find(fq => fq.id === q.follow_up.question_id);
+      if (followUpQ && q.follow_up.condition) {
+        // Simple condition evaluation
+        const value = responses[q.field];
+        const shouldAsk = eval(q.follow_up.condition.replace('value', value));
+
+        if (shouldAsk) {
+          print('AI: ' + followUpQ.question, 'cyan');
+          const followAnswer = await question(`${colors.green}You: ${colors.reset}`);
+          console.log('');
+          responses[followUpQ.field] = followAnswer;
+        }
+      }
+    }
+  }
+
+  rl.close();
+
+  // Calculate qualification
+  printHeader('Calculating Qualification...');
+  console.log('');
+
+  print('Collected Information:', 'bright');
+  Object.keys(responses).forEach(key => {
+    console.log(`  ${key}: ${responses[key]}`);
+  });
+  console.log('');
+
+  // Run qualification
+  const result = calculateQualification(config, responses);
+
+  // Display results
+  printHeader('Qualification Result');
+  console.log('');
+
+  if (result.autoDisqualified) {
+    error(`❌ Auto-Disqualified`);
+    console.log(`   Reason: ${result.autoDisqualifyReason}`);
+    console.log('');
+
+    if (config.conversation_flow.closing && config.conversation_flow.closing.unqualified) {
+      print('AI Agent Closing:', 'cyan');
+      let closing = config.conversation_flow.closing.unqualified;
+      Object.keys(responses).forEach(key => {
+        closing = closing.replace(`{{${key}}}`, responses[key]);
+      });
+      console.log(`  "${closing}"`);
+    }
+  } else {
+    console.log(`  Score: ${result.score}/${result.maxScore} (${result.percentage.toFixed(1)}%)`);
+    console.log(`  Threshold: 70%`);
+    console.log('');
+
+    if (result.qualified) {
+      success('✅ QUALIFIED - Lead meets requirements!');
+    } else {
+      error('❌ NOT QUALIFIED - Below threshold');
+    }
+    console.log('');
+
+    // Show criteria breakdown
+    if (result.metCriteria.length > 0) {
+      print('Met Criteria:', 'green');
+      result.metCriteria.forEach(c => {
+        console.log(`  ✓ ${c.field} ${c.operator} ${c.value} (weight: ${c.weight})`);
+      });
+      console.log('');
+    }
+
+    if (result.failedCriteria.length > 0) {
+      print('Failed Criteria:', 'red');
+      result.failedCriteria.forEach(c => {
+        console.log(`  ✗ ${c.field} ${c.operator} ${c.value} (weight: ${c.weight})`);
+        console.log(`    Your answer: ${c.actualValue}`);
+      });
+      console.log('');
+    }
+
+    // Show appropriate closing
+    if (config.conversation_flow.closing) {
+      print('AI Agent Closing:', 'cyan');
+      let closing = result.qualified
+        ? config.conversation_flow.closing.qualified
+        : config.conversation_flow.closing.unqualified;
+
+      if (closing) {
+        Object.keys(responses).forEach(key => {
+          closing = closing.replace(`{{${key}}}`, responses[key]);
+        });
+        closing = closing.replace('{{assigned_rep_name}}', 'Alex Johnson');
+        closing = closing.replace('{{follow_up_months}}', '2');
+        console.log(`  "${closing}"`);
+      }
+    }
+  }
+
+  console.log('');
+
+  // CRM action preview
+  printHeader('CRM Actions');
+  const action = result.qualified ? config.integration.crm.actions.qualified : config.integration.crm.actions.unqualified;
+
+  if (action) {
+    console.log(`  Create Lead: ${action.create_lead ? '✓' : '✗'}`);
+    if (action.assign_to) console.log(`  Assign To: ${action.assign_to}`);
+    if (action.tags) console.log(`  Tags: ${action.tags.join(', ')}`);
+    if (action.send_notification) console.log(`  Notify Sales Team: ✓`);
+    if (action.add_to_nurture) console.log(`  Add to Nurture Campaign: ✓`);
+  }
+
+  console.log('');
+}
+
+/**
  * Main function
  */
-function main() {
+async function main() {
   // Show usage if no arguments
   if (args.length === 0) {
     showUsage();
@@ -521,6 +721,12 @@ function main() {
     });
   }
   console.log('');
+
+  // Run interactive mode if specified
+  if (options.interactive) {
+    await runInteractive(config);
+    return;
+  }
 
   // Run tests if specified
   if (options.payload) {
@@ -594,6 +800,7 @@ function main() {
     success('Schema validation complete!');
     info('Use --payload <file> to run a test scenario');
     info('Use --all to run all tests in test-payloads/');
+    info('Use --interactive to simulate a live call');
     console.log('');
   }
 }
