@@ -1,0 +1,697 @@
+{
+  "scenarioId": "premier_mca_outbound_prospecting",
+  "name": "Premier MCA - Outbound Cold Call Prospecting",
+  "description": "Cold calling script for MCA lending with objection handling, permission-based approach, and meeting scheduling. Designed for short, respectful conversations that book qualified appointments.",
+  "version": "1.0.0",
+  "industry": "mca_lending",
+  "useCase": "outbound_prospecting",
+  "entryNode": "opening_hook",
+
+  "nodes": [
+    {
+      "id": "opening_hook",
+      "type": "greeting",
+      "name": "Permission-Based Opening",
+      "prompt": "Hi, this is Sarah calling from Premier MCA. I'm reaching out to business owners who might benefit from fast business funding options. Is this a good time for a quick 2-minute conversation?",
+      "variable": {
+        "name": "has_time",
+        "type": "enum",
+        "label": "Has Time to Talk",
+        "validation": {
+          "required": true,
+          "enum": ["yes", "no", "maybe", "busy"],
+          "retryLimit": 1
+        }
+      },
+      "edges": [
+        {
+          "id": "opening_to_busy",
+          "type": "conditional",
+          "target": "objection_busy",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "has_time",
+              "operator": "in",
+              "value": ["no", "busy"]
+            }
+          ]
+        },
+        {
+          "id": "opening_to_value_prop",
+          "type": "default",
+          "target": "value_proposition"
+        }
+      ]
+    },
+
+    {
+      "id": "value_proposition",
+      "type": "question",
+      "name": "Quick Value Proposition",
+      "prompt": "Great! We help businesses like yours access working capital quickly - usually within 24 to 48 hours, without the hassle of traditional bank loans. Have you ever explored business funding or merchant cash advances before?",
+      "variable": {
+        "name": "prior_experience",
+        "type": "enum",
+        "label": "Prior MCA Experience",
+        "validation": {
+          "required": true,
+          "enum": ["yes_current", "yes_past", "no_never", "not_interested"],
+          "retryLimit": 2
+        }
+      },
+      "edges": [
+        {
+          "id": "value_to_not_interested",
+          "type": "conditional",
+          "target": "objection_not_interested",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "prior_experience",
+              "operator": "eq",
+              "value": "not_interested"
+            }
+          ]
+        },
+        {
+          "id": "value_to_already_working",
+          "type": "conditional",
+          "target": "objection_already_working",
+          "priority": 8,
+          "conditions": [
+            {
+              "variable": "prior_experience",
+              "operator": "eq",
+              "value": "yes_current"
+            }
+          ]
+        },
+        {
+          "id": "value_to_qualify",
+          "type": "default",
+          "target": "quick_qualify_revenue"
+        }
+      ]
+    },
+
+    {
+      "id": "quick_qualify_revenue",
+      "type": "question",
+      "name": "Quick Revenue Check",
+      "prompt": "Perfect. Just to make sure I'm not wasting your time, we typically work with businesses doing at least $15,000 a month in revenue. Does that sound like where your business is at?",
+      "variable": {
+        "name": "meets_revenue_threshold",
+        "type": "boolean",
+        "label": "Meets Revenue Threshold",
+        "validation": {
+          "required": true,
+          "retryLimit": 2
+        }
+      },
+      "edges": [
+        {
+          "id": "qualify_to_too_small",
+          "type": "conditional",
+          "target": "disqualified_too_small",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "meets_revenue_threshold",
+              "operator": "eq",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": "qualify_to_business_age",
+          "type": "default",
+          "target": "quick_qualify_age"
+        }
+      ]
+    },
+
+    {
+      "id": "quick_qualify_age",
+      "type": "question",
+      "name": "Quick Business Age Check",
+      "prompt": "Great. And have you been in business for at least 6 months?",
+      "variable": {
+        "name": "meets_age_threshold",
+        "type": "boolean",
+        "label": "Meets Age Threshold",
+        "validation": {
+          "required": true,
+          "retryLimit": 2
+        }
+      },
+      "edges": [
+        {
+          "id": "age_to_too_new",
+          "type": "conditional",
+          "target": "disqualified_too_new",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "meets_age_threshold",
+              "operator": "eq",
+              "value": false
+            }
+          ]
+        },
+        {
+          "id": "age_to_need_check",
+          "type": "default",
+          "target": "assess_need"
+        }
+      ]
+    },
+
+    {
+      "id": "assess_need",
+      "type": "question",
+      "name": "Identify Need",
+      "prompt": "Excellent. Many of our clients use funding for things like hiring, inventory, equipment, or seasonal cash flow. Is there anything like that on your radar right now, or are you just exploring options?",
+      "variable": {
+        "name": "has_need",
+        "type": "enum",
+        "label": "Current Need",
+        "validation": {
+          "required": true,
+          "enum": ["immediate_need", "upcoming_need", "just_exploring", "no_need"],
+          "retryLimit": 2
+        }
+      },
+      "edges": [
+        {
+          "id": "need_to_no_need",
+          "type": "conditional",
+          "target": "nurture_future",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "has_need",
+              "operator": "eq",
+              "value": "no_need"
+            }
+          ]
+        },
+        {
+          "id": "need_to_schedule",
+          "type": "conditional",
+          "target": "schedule_meeting",
+          "priority": 8,
+          "conditions": [
+            {
+              "variable": "has_need",
+              "operator": "in",
+              "value": ["immediate_need", "upcoming_need"]
+            }
+          ]
+        },
+        {
+          "id": "need_to_exploring",
+          "type": "default",
+          "target": "soft_close_exploring"
+        }
+      ]
+    },
+
+    {
+      "id": "schedule_meeting",
+      "type": "callback",
+      "name": "Schedule Discovery Call",
+      "prompt": "Perfect! I'd love to set up a quick 15-minute call with one of our funding specialists who can walk you through options specific to your business. Do you have your calendar handy? How does tomorrow or Wednesday look for you?",
+      "variable": {
+        "name": "preferred_time",
+        "type": "string",
+        "label": "Preferred Meeting Time",
+        "validation": {
+          "required": false,
+          "retryLimit": 2
+        }
+      },
+      "edges": [
+        {
+          "id": "schedule_to_collect_email",
+          "type": "default",
+          "target": "collect_contact_info"
+        }
+      ],
+      "metadata": {
+        "crmAction": "create_deal"
+      }
+    },
+
+    {
+      "id": "collect_contact_info",
+      "type": "question",
+      "name": "Collect Contact Information",
+      "prompt": "Great! Just to confirm, what's the best email to send the calendar invite to?",
+      "variable": {
+        "name": "email",
+        "type": "email",
+        "label": "Email",
+        "validation": {
+          "required": true,
+          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+          "retryLimit": 2,
+          "retryMessage": "Sorry, I didn't catch that. Can you spell out your email?"
+        },
+        "hubspotProperty": "email"
+      },
+      "edges": [
+        {
+          "id": "contact_to_confirm",
+          "type": "default",
+          "target": "meeting_scheduled"
+        }
+      ]
+    },
+
+    {
+      "id": "meeting_scheduled",
+      "type": "end",
+      "name": "Meeting Confirmed",
+      "prompt": "Perfect! You'll receive a calendar invite at {{email}} with a Zoom link. We'll see you then. Looking forward to helping your business grow!",
+      "edges": [],
+      "metadata": {
+        "endReason": "meeting_scheduled",
+        "crmAction": "send_notification",
+        "notificationRecipients": ["sales@premiermca.com", "#scheduled-calls"]
+      }
+    },
+
+    {
+      "id": "soft_close_exploring",
+      "type": "callback",
+      "name": "Soft Close for Explorers",
+      "prompt": "I totally understand. Since you're in the exploration phase, would it make sense for me to send you a quick overview of our programs via email? No pressure - just some info you can review when it's convenient.",
+      "variable": {
+        "name": "wants_info",
+        "type": "boolean",
+        "label": "Wants Information",
+        "validation": {
+          "required": true
+        }
+      },
+      "edges": [
+        {
+          "id": "exploring_yes_to_email",
+          "type": "conditional",
+          "target": "collect_email_exploring",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "wants_info",
+              "operator": "eq",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "exploring_no_to_end",
+          "type": "default",
+          "target": "polite_end"
+        }
+      ]
+    },
+
+    {
+      "id": "collect_email_exploring",
+      "type": "question",
+      "name": "Collect Email for Info",
+      "prompt": "Great! What's the best email for that?",
+      "variable": {
+        "name": "email",
+        "type": "email",
+        "label": "Email",
+        "validation": {
+          "required": true,
+          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+        },
+        "hubspotProperty": "email"
+      },
+      "edges": [
+        {
+          "id": "email_to_info_sent",
+          "type": "default",
+          "target": "info_sent_end"
+        }
+      ]
+    },
+
+    {
+      "id": "info_sent_end",
+      "type": "end",
+      "name": "Information Sent",
+      "prompt": "Perfect! I'll send that over to {{email}} right after this call. Feel free to reach out if you have any questions. Have a great day!",
+      "edges": [],
+      "metadata": {
+        "endReason": "info_sent",
+        "crmAction": "update_contact"
+      }
+    },
+
+    {
+      "id": "objection_busy",
+      "type": "fallback",
+      "name": "Handle 'I'm Busy' Objection",
+      "prompt": "No problem at all - I know you're busy. Would it be better if I called back at a specific time? Or I can send you a quick email with info and you can reach out if it's relevant?",
+      "variable": {
+        "name": "callback_preference",
+        "type": "enum",
+        "label": "Callback Preference",
+        "validation": {
+          "required": true,
+          "enum": ["callback_later", "send_email", "not_interested"]
+        }
+      },
+      "edges": [
+        {
+          "id": "busy_to_callback",
+          "type": "conditional",
+          "target": "schedule_callback",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "callback_preference",
+              "operator": "eq",
+              "value": "callback_later"
+            }
+          ]
+        },
+        {
+          "id": "busy_to_email",
+          "type": "conditional",
+          "target": "collect_email_exploring",
+          "priority": 8,
+          "conditions": [
+            {
+              "variable": "callback_preference",
+              "operator": "eq",
+              "value": "send_email"
+            }
+          ]
+        },
+        {
+          "id": "busy_to_end",
+          "type": "default",
+          "target": "polite_end"
+        }
+      ]
+    },
+
+    {
+      "id": "schedule_callback",
+      "type": "callback",
+      "name": "Schedule Follow-up Call",
+      "prompt": "Absolutely. What day and time works best for you?",
+      "variable": {
+        "name": "callback_time",
+        "type": "string",
+        "label": "Callback Time",
+        "validation": {
+          "required": false
+        }
+      },
+      "edges": [
+        {
+          "id": "callback_to_end",
+          "type": "default",
+          "target": "callback_scheduled_end"
+        }
+      ]
+    },
+
+    {
+      "id": "callback_scheduled_end",
+      "type": "end",
+      "name": "Callback Scheduled",
+      "prompt": "Perfect! I'll give you a call back at {{callback_time}}. Talk to you then!",
+      "edges": [],
+      "metadata": {
+        "endReason": "callback_scheduled",
+        "crmAction": "update_contact"
+      }
+    },
+
+    {
+      "id": "objection_not_interested",
+      "type": "fallback",
+      "name": "Handle 'Not Interested' Objection",
+      "prompt": "I totally understand. Just out of curiosity, is it because you're all set with funding right now, or is it just not the right timing?",
+      "variable": {
+        "name": "not_interested_reason",
+        "type": "enum",
+        "label": "Not Interested Reason",
+        "validation": {
+          "required": false,
+          "enum": ["dont_need_funding", "bad_timing", "happy_with_current", "just_not_interested"]
+        }
+      },
+      "edges": [
+        {
+          "id": "not_interested_to_nurture",
+          "type": "conditional",
+          "target": "nurture_future",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "not_interested_reason",
+              "operator": "in",
+              "value": ["dont_need_funding", "bad_timing"]
+            }
+          ]
+        },
+        {
+          "id": "not_interested_to_end",
+          "type": "default",
+          "target": "polite_end"
+        }
+      ]
+    },
+
+    {
+      "id": "objection_already_working",
+      "type": "fallback",
+      "name": "Handle 'Already Have Provider' Objection",
+      "prompt": "That's great that you're already working with someone! Just so you know, a lot of our clients use us as a backup option or to compare rates. Would it make sense to have our info on file in case you ever want a second quote?",
+      "variable": {
+        "name": "wants_backup_option",
+        "type": "boolean",
+        "label": "Wants Backup Option",
+        "validation": {
+          "required": true
+        }
+      },
+      "edges": [
+        {
+          "id": "already_working_yes",
+          "type": "conditional",
+          "target": "collect_email_exploring",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "wants_backup_option",
+              "operator": "eq",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "already_working_no",
+          "type": "default",
+          "target": "polite_end"
+        }
+      ]
+    },
+
+    {
+      "id": "disqualified_too_small",
+      "type": "end",
+      "name": "Disqualified - Revenue Too Low",
+      "prompt": "Thanks for being upfront. We typically work with businesses doing a bit more in monthly revenue, but I'll make a note to check back in with you in 6 months to see how things are growing. Best of luck!",
+      "edges": [],
+      "metadata": {
+        "endReason": "revenue_too_low",
+        "crmAction": "update_contact"
+      }
+    },
+
+    {
+      "id": "disqualified_too_new",
+      "type": "end",
+      "name": "Disqualified - Business Too New",
+      "prompt": "Thanks for sharing. We usually work with businesses that have been operating for at least 6 months, but I'll make a note to reach back out to you in a few months. Best of luck as you grow!",
+      "edges": [],
+      "metadata": {
+        "endReason": "business_too_new",
+        "crmAction": "update_contact"
+      }
+    },
+
+    {
+      "id": "nurture_future",
+      "type": "end",
+      "name": "Add to Nurture Campaign",
+      "prompt": "That makes total sense. I'll make a note and we'll check back in with you down the road. If anything changes before then, feel free to reach out. Have a great day!",
+      "edges": [],
+      "metadata": {
+        "endReason": "nurture_future",
+        "crmAction": "update_contact"
+      }
+    },
+
+    {
+      "id": "polite_end",
+      "type": "end",
+      "name": "Polite Decline End",
+      "prompt": "I totally understand. Thanks for your time today, and have a great rest of your day!",
+      "edges": [],
+      "metadata": {
+        "endReason": "declined",
+        "crmAction": "update_contact"
+      }
+    }
+  ],
+
+  "variables": [
+    {
+      "name": "has_time",
+      "type": "enum",
+      "label": "Has Time to Talk",
+      "validation": {
+        "required": true,
+        "enum": ["yes", "no", "maybe", "busy"]
+      }
+    },
+    {
+      "name": "prior_experience",
+      "type": "enum",
+      "label": "Prior MCA Experience",
+      "validation": {
+        "required": true,
+        "enum": ["yes_current", "yes_past", "no_never", "not_interested"]
+      }
+    },
+    {
+      "name": "meets_revenue_threshold",
+      "type": "boolean",
+      "label": "Meets Revenue Threshold (≥$15K/mo)",
+      "validation": {
+        "required": true
+      }
+    },
+    {
+      "name": "meets_age_threshold",
+      "type": "boolean",
+      "label": "Meets Age Threshold (≥6 months)",
+      "validation": {
+        "required": true
+      }
+    },
+    {
+      "name": "has_need",
+      "type": "enum",
+      "label": "Current Funding Need",
+      "validation": {
+        "required": true,
+        "enum": ["immediate_need", "upcoming_need", "just_exploring", "no_need"]
+      }
+    },
+    {
+      "name": "preferred_time",
+      "type": "string",
+      "label": "Preferred Meeting Time",
+      "validation": {
+        "required": false
+      }
+    },
+    {
+      "name": "email",
+      "type": "email",
+      "label": "Email",
+      "validation": {
+        "required": false,
+        "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+      },
+      "hubspotProperty": "email"
+    },
+    {
+      "name": "wants_info",
+      "type": "boolean",
+      "label": "Wants Information Packet"
+    },
+    {
+      "name": "callback_preference",
+      "type": "enum",
+      "label": "Callback Preference",
+      "validation": {
+        "enum": ["callback_later", "send_email", "not_interested"]
+      }
+    },
+    {
+      "name": "callback_time",
+      "type": "string",
+      "label": "Callback Time"
+    },
+    {
+      "name": "not_interested_reason",
+      "type": "enum",
+      "label": "Not Interested Reason",
+      "validation": {
+        "enum": ["dont_need_funding", "bad_timing", "happy_with_current", "just_not_interested"]
+      }
+    },
+    {
+      "name": "wants_backup_option",
+      "type": "boolean",
+      "label": "Wants Backup Provider Info"
+    }
+  ],
+
+  "config": {
+    "maxCallDuration": 300,
+    "silenceTimeout": 8,
+    "retellAgentId": "agent_xxxxxxxxxxxxxxxx",
+    "retellVoice": "female-1",
+    "webhookUrl": "https://hook.us1.make.com/xxxxxxxxxxxxxxxx",
+    "webhookEvents": [
+      "call_ended"
+    ]
+  },
+
+  "integrations": {
+    "hubspot": {
+      "enabled": true,
+      "createContact": true,
+      "contactOwner": "outbound@premiermca.com",
+      "dealPipeline": "outbound_pipeline"
+    },
+    "notion": {
+      "enabled": true,
+      "databaseId": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    "slack": {
+      "enabled": true,
+      "channel": "#outbound-wins",
+      "notifyOn": ["qualified"]
+    }
+  },
+
+  "costModel": {
+    "estimatedNodes": 6,
+    "estimatedDuration": 120,
+    "retellCostPerMinute": 0.10,
+    "estimatedCostPerCall": 0.20
+  },
+
+  "metadata": {
+    "author": "ResultantAI",
+    "createdAt": "2025-11-18T00:00:00Z",
+    "updatedAt": "2025-11-18T00:00:00Z",
+    "tags": ["mca", "lending", "outbound", "cold_calling", "objection_handling", "retell"],
+    "buildTime": "90min"
+  }
+}
