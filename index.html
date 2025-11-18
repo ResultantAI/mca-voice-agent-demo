@@ -247,7 +247,7 @@
             color: #22543D;
         }
 
-        /* Scenarios Section Placeholder */
+        /* Scenarios Section */
         .scenarios-section {
             padding: 3rem 0;
             background: var(--white);
@@ -257,19 +257,295 @@
             text-align: center;
             font-size: 2rem;
             color: var(--navy);
+            margin-bottom: 3rem;
+        }
+
+        .scenarios-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 2rem;
+            margin-bottom: 2rem;
+        }
+
+        .scenario-card {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s, box-shadow 0.3s;
+            cursor: pointer;
+            border: 2px solid var(--gray-medium);
+        }
+
+        .scenario-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 12px 24px rgba(0,0,0,0.15);
+        }
+
+        .scenario-card.qualified {
+            border-top: 4px solid var(--success);
+        }
+
+        .scenario-card.unqualified {
+            border-top: 4px solid var(--danger);
+        }
+
+        .scenario-card.pending {
+            border-top: 4px solid #ED8936;
+        }
+
+        .scenario-badge {
+            display: inline-block;
+            padding: 0.4rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
             margin-bottom: 1rem;
         }
 
-        .scenarios-placeholder {
-            text-align: center;
-            padding: 3rem;
-            background: var(--gray-light);
-            border-radius: 12px;
-            border: 2px dashed var(--gray-medium);
+        .scenario-badge.high-intent {
+            background: #C6F6D5;
+            color: #22543D;
         }
 
-        .scenarios-placeholder p {
-            font-size: 1.1rem;
+        .scenario-badge.new-business {
+            background: #FED7D7;
+            color: #C53030;
+        }
+
+        .scenario-badge.review-needed {
+            background: #FEEBC8;
+            color: #C05621;
+        }
+
+        .scenario-card h4 {
+            font-size: 1.5rem;
+            color: var(--navy);
+            margin-bottom: 1.5rem;
+            font-weight: 700;
+        }
+
+        .scenario-stats {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .scenario-stat {
+            padding: 0.75rem;
+            background: var(--gray-light);
+            border-radius: 8px;
+        }
+
+        .scenario-stat-label {
+            font-size: 0.75rem;
+            color: var(--gray-dark);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.25rem;
+        }
+
+        .scenario-stat-value {
+            font-size: 1rem;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            margin-bottom: 1.5rem;
+        }
+
+        .status-badge.qualified {
+            background: var(--success);
+            color: var(--white);
+        }
+
+        .status-badge.unqualified {
+            background: var(--danger);
+            color: var(--white);
+        }
+
+        .status-badge.pending {
+            background: #ED8936;
+            color: var(--white);
+        }
+
+        .scenario-button {
+            width: 100%;
+            padding: 1rem;
+            background: var(--navy);
+            color: var(--white);
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s, transform 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .scenario-button:hover {
+            background: var(--navy-dark);
+            transform: scale(1.02);
+        }
+
+        .scenario-button:active {
+            transform: scale(0.98);
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.7);
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: var(--white);
+            border-radius: 16px;
+            padding: 2rem;
+            max-width: 600px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideUp 0.3s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 1rem;
+            right: 1rem;
+            background: var(--gray-medium);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 1.5rem;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background 0.3s;
+        }
+
+        .modal-close:hover {
+            background: var(--gray-dark);
+            color: var(--white);
+        }
+
+        .modal-header {
+            margin-bottom: 1.5rem;
+        }
+
+        .modal-header h3 {
+            font-size: 1.75rem;
+            color: var(--navy);
+            margin-bottom: 0.5rem;
+        }
+
+        .call-transcript {
+            background: var(--gray-light);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .call-message {
+            margin-bottom: 1rem;
+            padding: 1rem;
+            border-radius: 8px;
+        }
+
+        .call-message:last-child {
+            margin-bottom: 0;
+        }
+
+        .call-message.ai {
+            background: var(--white);
+            border-left: 4px solid var(--navy);
+        }
+
+        .call-message.customer {
+            background: #EDF2F7;
+            border-left: 4px solid var(--gold);
+        }
+
+        .call-speaker {
+            font-weight: 700;
+            color: var(--navy);
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+        }
+
+        .call-text {
+            color: var(--gray-dark);
+            line-height: 1.6;
+        }
+
+        .modal-result {
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1.5rem;
+        }
+
+        .modal-result.qualified {
+            background: #C6F6D5;
+            border-left: 4px solid var(--success);
+        }
+
+        .modal-result.unqualified {
+            background: #FED7D7;
+            border-left: 4px solid var(--danger);
+        }
+
+        .modal-result.pending {
+            background: #FEEBC8;
+            border-left: 4px solid #ED8936;
+        }
+
+        .modal-result h4 {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--navy);
+        }
+
+        .modal-result p {
             color: var(--gray-dark);
         }
 
@@ -321,8 +597,21 @@
                 grid-template-columns: 1fr;
             }
 
+            .scenarios-grid {
+                grid-template-columns: 1fr;
+            }
+
             .tutorial-banner {
                 font-size: 1rem;
+            }
+
+            .modal-content {
+                width: 95%;
+                padding: 1.5rem;
+            }
+
+            .scenario-card h4 {
+                font-size: 1.25rem;
             }
         }
 
@@ -335,8 +624,24 @@
                 padding: 1.5rem;
             }
 
+            .scenario-card {
+                padding: 1.5rem;
+            }
+
             .tutorial-banner {
                 font-size: 0.9rem;
+            }
+
+            .scenario-stats {
+                grid-template-columns: 1fr;
+            }
+
+            .modal-content {
+                padding: 1rem;
+            }
+
+            .call-message {
+                padding: 0.75rem;
             }
         }
 
@@ -461,15 +766,310 @@
         </div>
     </section>
 
-    <!-- Scenarios Section (Placeholder) -->
+    <!-- Scenarios Section -->
     <section class="scenarios-section">
         <div class="container">
             <h3>Interactive Demo Scenarios</h3>
-            <div class="scenarios-placeholder">
-                <p><� Demo scenarios will be added here</p>
+
+            <div class="scenarios-grid">
+                <!-- Scenario 1: Qualified Lead -->
+                <div class="scenario-card qualified" onclick="openModal('modal1')">
+                    <span class="scenario-badge high-intent">HIGH INTENT</span>
+                    <h4>City Auto Repair</h4>
+
+                    <div class="status-badge qualified">✅ QUALIFIED</div>
+
+                    <div class="scenario-stats">
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Time in Business</div>
+                            <div class="scenario-stat-value">3 years</div>
+                        </div>
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Monthly Revenue</div>
+                            <div class="scenario-stat-value">$45,000</div>
+                        </div>
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Credit Score</div>
+                            <div class="scenario-stat-value">620</div>
+                        </div>
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Funding Need</div>
+                            <div class="scenario-stat-value">$50,000</div>
+                        </div>
+                    </div>
+
+                    <button class="scenario-button">
+                        <span>▶</span> See AI Handle This Call
+                    </button>
+                </div>
+
+                <!-- Scenario 2: Not Qualified -->
+                <div class="scenario-card unqualified" onclick="openModal('modal2')">
+                    <span class="scenario-badge new-business">NEW BUSINESS</span>
+                    <h4>Fresh Start Bakery</h4>
+
+                    <div class="status-badge unqualified">❌ TOO EARLY</div>
+
+                    <div class="scenario-stats">
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Time in Business</div>
+                            <div class="scenario-stat-value">4 months</div>
+                        </div>
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Monthly Revenue</div>
+                            <div class="scenario-stat-value">$8,000</div>
+                        </div>
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Credit Score</div>
+                            <div class="scenario-stat-value">580</div>
+                        </div>
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Funding Need</div>
+                            <div class="scenario-stat-value">$25,000</div>
+                        </div>
+                    </div>
+
+                    <button class="scenario-button">
+                        <span>▶</span> See AI Handle This Call
+                    </button>
+                </div>
+
+                <!-- Scenario 3: Needs More Info -->
+                <div class="scenario-card pending" onclick="openModal('modal3')">
+                    <span class="scenario-badge review-needed">REVIEW NEEDED</span>
+                    <h4>Martinez Landscaping</h4>
+
+                    <div class="status-badge pending">⚠️ PENDING INFO</div>
+
+                    <div class="scenario-stats">
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Time in Business</div>
+                            <div class="scenario-stat-value">2 years</div>
+                        </div>
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Monthly Revenue</div>
+                            <div class="scenario-stat-value">$12K-15K</div>
+                        </div>
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Credit Score</div>
+                            <div class="scenario-stat-value">595</div>
+                        </div>
+                        <div class="scenario-stat">
+                            <div class="scenario-stat-label">Funding Need</div>
+                            <div class="scenario-stat-value">$35,000</div>
+                        </div>
+                    </div>
+
+                    <button class="scenario-button">
+                        <span>▶</span> See AI Handle This Call
+                    </button>
+                </div>
             </div>
         </div>
     </section>
+
+    <!-- Modals -->
+    <!-- Modal 1: Qualified Lead -->
+    <div id="modal1" class="modal" onclick="closeModalOnBackdrop(event, 'modal1')">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal1')">&times;</button>
+
+            <div class="modal-header">
+                <span class="scenario-badge high-intent">HIGH INTENT</span>
+                <h3>City Auto Repair - AI Conversation</h3>
+            </div>
+
+            <div class="call-transcript">
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">Good afternoon! Thank you for your interest in MCA funding. I'm here to help you explore your options. May I have your business name?</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">Yes, this is City Auto Repair. We're looking for some working capital.</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">Great! City Auto Repair - I'd love to help. How long have you been in business?</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">We've been operating for about 3 years now.</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">Perfect. And what's your average monthly revenue?</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">We average around $45,000 per month.</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">Excellent. How much funding are you looking for, and what would you use it for?</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">About $50,000. We want to expand our service bay and add another mechanic.</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">That sounds like a smart investment! Based on your business profile, you look like a strong candidate. I'm going to connect you with one of our funding specialists right away. They'll be reaching out within the next 15 minutes. Can I get the best phone number to reach you?</div>
+                </div>
+            </div>
+
+            <div class="modal-result qualified">
+                <h4>✅ Result: QUALIFIED</h4>
+                <p><strong>Lead routed to sales team</strong> - Strong revenue, established business, clear use of funds. Estimated approval time: 24-48 hours.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 2: Unqualified Lead -->
+    <div id="modal2" class="modal" onclick="closeModalOnBackdrop(event, 'modal2')">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal2')">&times;</button>
+
+            <div class="modal-header">
+                <span class="scenario-badge new-business">NEW BUSINESS</span>
+                <h3>Fresh Start Bakery - AI Conversation</h3>
+            </div>
+
+            <div class="call-transcript">
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">Hello! Thanks for reaching out about MCA funding. What's your business name?</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">Fresh Start Bakery. We just opened and things are going well!</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">Congratulations on your new bakery! How long have you been open?</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">About 4 months now. We're building our customer base.</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">That's exciting! What's your monthly revenue currently?</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">Around $8,000 per month, and it's growing each month.</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">I appreciate you sharing that. I can see your business is on a great trajectory. However, for our MCA program, we typically work with businesses that have been operating for at least 6 months with revenue above $15,000 per month. This helps ensure the funding structure works well for both parties.</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">Oh, I understand. What should I do?</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">Here's what I'd suggest: Keep building your business over the next few months. I'm going to add you to our follow-up list, and we'll check back with you in 3 months. By then, if your revenue continues growing, you should be in a perfect position for funding. Does that sound good?</div>
+                </div>
+            </div>
+
+            <div class="modal-result unqualified">
+                <h4>❌ Result: TOO EARLY</h4>
+                <p><strong>Added to 90-day nurture campaign</strong> - Business too new and revenue below threshold. Follow-up scheduled for 3 months to reassess qualification.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal 3: Pending Info -->
+    <div id="modal3" class="modal" onclick="closeModalOnBackdrop(event, 'modal3')">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal('modal3')">&times;</button>
+
+            <div class="modal-header">
+                <span class="scenario-badge review-needed">REVIEW NEEDED</span>
+                <h3>Martinez Landscaping - AI Conversation</h3>
+            </div>
+
+            <div class="call-transcript">
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">Good morning! I understand you're interested in business funding. What's the name of your company?</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">Martinez Landscaping. We need funding for new equipment.</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">Perfect. How long have you been in the landscaping business?</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">2 years this coming spring.</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">Great! And what's your typical monthly revenue?</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">Well, it varies with the season. Winter is slow, maybe $12,000. Summer can be $15,000 or more.</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">I understand - seasonal businesses definitely have those fluctuations. How much funding are you looking for?</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">Around $35,000 for a new truck and equipment.</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">That makes sense. Your business looks promising, but because of the seasonal revenue variation and the borderline revenue levels, I'd like to have one of our specialists review your application personally. They can look at your full financial picture including your seasonal trends. Can you provide 3 months of bank statements? This will help them make a quick decision.</div>
+                </div>
+
+                <div class="call-message customer">
+                    <div class="call-speaker">👤 Business Owner</div>
+                    <div class="call-text">Yes, I can do that.</div>
+                </div>
+
+                <div class="call-message ai">
+                    <div class="call-speaker">🤖 AI Agent</div>
+                    <div class="call-text">Perfect! I'm routing your application to our underwriting team for manual review. You'll receive an email within the hour with instructions on how to upload your documents. They typically review these within 24 hours. Sound good?</div>
+                </div>
+            </div>
+
+            <div class="modal-result pending">
+                <h4>⚠️ Result: PENDING - MANUAL REVIEW</h4>
+                <p><strong>Routed to underwriting team</strong> - Borderline case due to seasonal revenue fluctuation. Additional documentation requested. Review timeline: 24 hours.</p>
+            </div>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer>
@@ -481,6 +1081,39 @@
     </footer>
 
     <script>
+        // Modal functions
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.add('active');
+                document.body.style.overflow = 'hidden';
+            }
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+                document.body.style.overflow = 'auto';
+            }
+        }
+
+        function closeModalOnBackdrop(event, modalId) {
+            if (event.target.id === modalId) {
+                closeModal(modalId);
+            }
+        }
+
+        // Close modal on Escape key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.modal.active').forEach(modal => {
+                    modal.classList.remove('active');
+                });
+                document.body.style.overflow = 'auto';
+            }
+        });
+
         // Add smooth scrolling
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
