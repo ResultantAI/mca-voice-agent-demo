@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Premier MCA Lender - AI Voice Agent System</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --navy: #2C5282;
+            --navy-dark: #1A365D;
+            --navy-light: #4A7BA7;
+            --gold: #FFD700;
+            --gold-dark: #DAA520;
+            --white: #FFFFFF;
+            --gray-light: #F7FAFC;
+            --gray-medium: #E2E8F0;
+            --gray-dark: #4A5568;
+            --success: #48BB78;
+            --danger: #F56565;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-dark);
+            background: var(--gray-light);
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        /* Header */
+        header {
+            background: var(--navy);
+            color: var(--white);
+            padding: 1rem 0;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .brand h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--white);
+        }
+
+        .brand .tagline {
+            font-size: 0.875rem;
+            color: var(--gold);
+            margin-top: 0.25rem;
+        }
+
+        .contact-info {
+            text-align: right;
+        }
+
+        .contact-info .company {
+            font-weight: 600;
+            color: var(--gold);
+            font-size: 1.1rem;
+        }
+
+        .contact-info .details {
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+
+        .contact-info a {
+            color: var(--white);
+            text-decoration: none;
+            transition: color 0.3s;
+        }
+
+        .contact-info a:hover {
+            color: var(--gold);
+        }
+
+        /* Hero Section */
+        .hero {
+            background: linear-gradient(135deg, var(--navy) 0%, var(--navy-dark) 100%);
+            color: var(--white);
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .hero h2 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .hero .highlight {
+            color: var(--gold);
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            max-width: 700px;
+            margin: 0 auto;
+            opacity: 0.95;
+        }
+
+        /* Tutorial Banner */
+        .tutorial-banner {
+            background: var(--gold);
+            color: var(--navy-dark);
+            padding: 1rem;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .tutorial-banner .icon {
+            display: inline-block;
+            margin-right: 0.5rem;
+            font-size: 1.3rem;
+        }
+
+        /* Stats Grid */
+        .stats-section {
+            padding: 3rem 0;
+        }
+
+        .stats-section h3 {
+            text-align: center;
+            font-size: 2rem;
+            color: var(--navy);
+            margin-bottom: 2rem;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .stat-card {
+            background: var(--white);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.07);
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: var(--navy);
+        }
+
+        .stat-card.before::before {
+            background: var(--danger);
+        }
+
+        .stat-card.after::before {
+            background: var(--success);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 15px rgba(0,0,0,0.15);
+        }
+
+        .stat-card h4 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--gray-dark);
+            margin-bottom: 1.5rem;
+            font-weight: 600;
+        }
+
+        .stat-item {
+            margin-bottom: 1.5rem;
+        }
+
+        .stat-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .stat-label {
+            font-size: 0.875rem;
+            color: var(--gray-dark);
+            margin-bottom: 0.5rem;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--navy);
+        }
+
+        .stat-card.before .stat-value {
+            color: var(--danger);
+        }
+
+        .stat-card.after .stat-value {
+            color: var(--success);
+        }
+
+        .comparison-badge {
+            display: inline-block;
+            background: var(--gray-light);
+            color: var(--navy);
+            padding: 0.5rem 1rem;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+        }
+
+        .comparison-badge.before-badge {
+            background: #FED7D7;
+            color: #C53030;
+        }
+
+        .comparison-badge.after-badge {
+            background: #C6F6D5;
+            color: #22543D;
+        }
+
+        /* Scenarios Section Placeholder */
+        .scenarios-section {
+            padding: 3rem 0;
+            background: var(--white);
+        }
+
+        .scenarios-section h3 {
+            text-align: center;
+            font-size: 2rem;
+            color: var(--navy);
+            margin-bottom: 1rem;
+        }
+
+        .scenarios-placeholder {
+            text-align: center;
+            padding: 3rem;
+            background: var(--gray-light);
+            border-radius: 12px;
+            border: 2px dashed var(--gray-medium);
+        }
+
+        .scenarios-placeholder p {
+            font-size: 1.1rem;
+            color: var(--gray-dark);
+        }
+
+        /* Footer */
+        footer {
+            background: var(--navy-dark);
+            color: var(--white);
+            padding: 2rem 0;
+            text-align: center;
+            margin-top: 4rem;
+        }
+
+        footer p {
+            margin-bottom: 0.5rem;
+        }
+
+        footer a {
+            color: var(--gold);
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero h2 {
+                font-size: 1.75rem;
+            }
+
+            .hero p {
+                font-size: 1rem;
+            }
+
+            .header-content {
+                text-align: center;
+            }
+
+            .contact-info {
+                text-align: center;
+            }
+
+            .brand h1 {
+                font-size: 1.25rem;
+            }
+
+            .stats-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .tutorial-banner {
+                font-size: 1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .hero h2 {
+                font-size: 1.5rem;
+            }
+
+            .stat-card {
+                padding: 1.5rem;
+            }
+
+            .tutorial-banner {
+                font-size: 0.9rem;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card {
+            animation: fadeIn 0.6s ease-out;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+        .stat-card:nth-child(4) { animation-delay: 0.4s; }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <div class="brand">
+                    <h1>Premier MCA Lender - AI Voice Agent System</h1>
+                    <div class="tagline">Intelligent Lead Qualification at Scale</div>
+                </div>
+                <div class="contact-info">
+                    <div class="company">ResultantAI</div>
+                    <div class="details">
+                        <a href="mailto:contact@resultantai.com">contact@resultantai.com</a> |
+                        <a href="tel:+15555551234">(555) 555-1234</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <h2>Qualify <span class="highlight">200+ Leads Daily</span><br>with Zero Missed Calls</h2>
+            <p>Transform your MCA business with AI-powered voice agents that work 24/7, qualify leads in minutes, and scale infinitely.</p>
+        </div>
+    </section>
+
+    <!-- Tutorial Banner -->
+    <div class="tutorial-banner">
+        <span class="icon">=G</span>
+        Click any scenario below to see the AI in action
+    </div>
+
+    <!-- Stats Section -->
+    <section class="stats-section">
+        <div class="container">
+            <h3>The Transformation</h3>
+
+            <div class="stats-grid">
+                <!-- Before Card 1 -->
+                <div class="stat-card before">
+                    <span class="comparison-badge before-badge">BEFORE (Manual)</span>
+                    <h4>Qualification Efficiency</h4>
+                    <div class="stat-item">
+                        <div class="stat-label">Qualification Time</div>
+                        <div class="stat-value">15-20 min</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Daily Capacity</div>
+                        <div class="stat-value">20-25 leads</div>
+                    </div>
+                </div>
+
+                <!-- After Card 1 -->
+                <div class="stat-card after">
+                    <span class="comparison-badge after-badge">AFTER (AI-Powered)</span>
+                    <h4>Qualification Efficiency</h4>
+                    <div class="stat-item">
+                        <div class="stat-label">Qualification Time</div>
+                        <div class="stat-value">2-3 min</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">Daily Capacity</div>
+                        <div class="stat-value">200+ leads</div>
+                    </div>
+                </div>
+
+                <!-- Before Card 2 -->
+                <div class="stat-card before">
+                    <span class="comparison-badge before-badge">BEFORE (Manual)</span>
+                    <h4>Cost & Coverage</h4>
+                    <div class="stat-item">
+                        <div class="stat-label">Cost Per Lead</div>
+                        <div class="stat-value">$35-50</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">After Hours Coverage</div>
+                        <div class="stat-value">0%</div>
+                    </div>
+                </div>
+
+                <!-- After Card 2 -->
+                <div class="stat-card after">
+                    <span class="comparison-badge after-badge">AFTER (AI-Powered)</span>
+                    <h4>Cost & Coverage</h4>
+                    <div class="stat-item">
+                        <div class="stat-label">Cost Per Lead</div>
+                        <div class="stat-value">$0.21</div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-label">After Hours Coverage</div>
+                        <div class="stat-value">100%</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Scenarios Section (Placeholder) -->
+    <section class="scenarios-section">
+        <div class="container">
+            <h3>Interactive Demo Scenarios</h3>
+            <div class="scenarios-placeholder">
+                <p><¯ Demo scenarios will be added here</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer>
+        <div class="container">
+            <p>&copy; 2024 ResultantAI. All rights reserved.</p>
+            <p>Powered by Advanced AI Voice Technology</p>
+            <p><a href="https://resultantai.com">Learn More at ResultantAI.com</a></p>
+        </div>
+    </footer>
+
+    <script>
+        // Add smooth scrolling
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+
+        // Log page load
+        console.log('MCA Voice Agent Demo loaded successfully');
+    </script>
+</body>
+</html>
