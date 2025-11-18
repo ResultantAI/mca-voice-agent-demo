@@ -903,8 +903,7 @@
                 <div class="contact-info">
                     <div class="company">ResultantAI</div>
                     <div class="details">
-                        <a href="mailto:contact@resultantai.com">contact@resultantai.com</a> |
-                        <a href="tel:+15555551234">(555) 555-1234</a>
+                        <a href="mailto:chris@resultantai.com">chris@resultantai.com</a>
                     </div>
                 </div>
             </div>
@@ -1335,7 +1334,7 @@
     <!-- Footer -->
     <footer>
         <div class="container">
-            <p>&copy; 2024 ResultantAI. All rights reserved.</p>
+            <p>&copy; 2025 ResultantAI. All rights reserved.</p>
             <p>Powered by Advanced AI Voice Technology</p>
             <p><a href="https://resultantai.com">Learn More at ResultantAI.com</a></p>
         </div>
@@ -1469,7 +1468,7 @@
             
             // Reset transcript and CRM
             const transcript = document.getElementById(`transcript${num}`);
-            transcript.innerHTML = '';
+            transcript.innerHTML = '<div class="typing-indicator" id="typing' + num + '"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>';
             
             // Reset all CRM fields
             ['contact', 'business', 'time', 'revenue', 'credit', 'funding', 'status'].forEach(field => {
