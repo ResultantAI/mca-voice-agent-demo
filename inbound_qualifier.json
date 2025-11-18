@@ -1,0 +1,510 @@
+{
+  "scenarioId": "premier_mca_inbound_qualifier",
+  "name": "Premier MCA - Inbound Lead Qualification",
+  "description": "Qualifies inbound MCA lending leads by collecting loan amount, business type, and urgency. Routes qualified leads to sales, disqualified to nurture, and borderline to manual review.",
+  "version": "1.0.0",
+  "industry": "mca_lending",
+  "useCase": "inbound_qualifier",
+  "entryNode": "greeting",
+
+  "nodes": [
+    {
+      "id": "greeting",
+      "type": "greeting",
+      "name": "Initial Greeting",
+      "prompt": "Thank you for calling Premier MCA. My name is Sarah, and I'm here to help you explore funding options for your business. May I start by getting your name?",
+      "variable": {
+        "name": "contact_name",
+        "type": "string",
+        "label": "Contact Name",
+        "validation": {
+          "required": true,
+          "retryLimit": 2,
+          "retryMessage": "I'm sorry, I didn't catch that. Could you please tell me your name?",
+          "fallbackNode": "poor_connection"
+        },
+        "hubspotProperty": "firstname"
+      },
+      "edges": [
+        {
+          "id": "greeting_to_business",
+          "type": "default",
+          "target": "ask_business_name"
+        }
+      ]
+    },
+
+    {
+      "id": "ask_business_name",
+      "type": "question",
+      "name": "Collect Business Name",
+      "prompt": "Great to meet you, {{contact_name}}. And what's the name of your business?",
+      "variable": {
+        "name": "business_name",
+        "type": "string",
+        "label": "Business Name",
+        "validation": {
+          "required": true,
+          "retryLimit": 2,
+          "retryMessage": "I didn't quite get that. What's your business name?",
+          "fallbackNode": "poor_connection"
+        },
+        "hubspotProperty": "company"
+      },
+      "edges": [
+        {
+          "id": "business_to_loan_amount",
+          "type": "default",
+          "target": "ask_loan_amount"
+        }
+      ]
+    },
+
+    {
+      "id": "ask_loan_amount",
+      "type": "question",
+      "name": "Collect Loan Amount",
+      "prompt": "Perfect. How much funding is {{business_name}} looking for today?",
+      "variable": {
+        "name": "loan_amount",
+        "type": "currency",
+        "label": "Funding Requested",
+        "validation": {
+          "required": true,
+          "min": 5000,
+          "max": 500000,
+          "retryLimit": 2,
+          "retryMessage": "I want to make sure I heard that correctly. How much funding are you looking for?",
+          "fallbackNode": "poor_connection"
+        },
+        "makeFieldId": "funding_amount",
+        "hubspotProperty": "funding_requested"
+      },
+      "edges": [
+        {
+          "id": "loan_to_revenue",
+          "type": "default",
+          "target": "ask_monthly_revenue"
+        }
+      ]
+    },
+
+    {
+      "id": "ask_monthly_revenue",
+      "type": "question",
+      "name": "Collect Monthly Revenue",
+      "prompt": "Thank you. To help match you with the right funding options, may I ask what your average monthly revenue is?",
+      "variable": {
+        "name": "monthly_revenue",
+        "type": "currency",
+        "label": "Monthly Revenue",
+        "validation": {
+          "required": true,
+          "min": 0,
+          "retryLimit": 2,
+          "retryMessage": "No worries if it's approximate. What would you estimate your typical monthly revenue to be?",
+          "fallbackNode": "poor_connection"
+        },
+        "makeFieldId": "monthly_revenue",
+        "hubspotProperty": "monthly_revenue"
+      },
+      "edges": [
+        {
+          "id": "revenue_to_business_age",
+          "type": "default",
+          "target": "ask_business_age"
+        }
+      ]
+    },
+
+    {
+      "id": "ask_business_age",
+      "type": "question",
+      "name": "Collect Business Age",
+      "prompt": "Got it. And how long has {{business_name}} been in business?",
+      "variable": {
+        "name": "business_age_months",
+        "type": "number",
+        "label": "Time in Business",
+        "validation": {
+          "required": true,
+          "min": 0,
+          "retryLimit": 2,
+          "retryMessage": "Just so I understand, how many months or years have you been operating?",
+          "fallbackNode": "poor_connection"
+        },
+        "makeFieldId": "time_in_business",
+        "hubspotProperty": "time_in_business"
+      },
+      "edges": [
+        {
+          "id": "age_to_urgency",
+          "type": "default",
+          "target": "ask_urgency"
+        }
+      ]
+    },
+
+    {
+      "id": "ask_urgency",
+      "type": "question",
+      "name": "Assess Timeline",
+      "prompt": "Perfect. Last question - how soon are you looking to have funding in place?",
+      "variable": {
+        "name": "urgency",
+        "type": "enum",
+        "label": "Urgency",
+        "validation": {
+          "required": true,
+          "enum": ["immediate", "this_week", "this_month", "exploring", "no_rush"],
+          "retryLimit": 2,
+          "retryMessage": "Are you looking for funding within the next few days, weeks, or are you just exploring options?",
+          "fallbackNode": "poor_connection"
+        },
+        "makeFieldId": "urgency",
+        "hubspotProperty": "deal_urgency"
+      },
+      "edges": [
+        {
+          "id": "urgency_to_qualification",
+          "type": "default",
+          "target": "qualification_branch"
+        }
+      ]
+    },
+
+    {
+      "id": "qualification_branch",
+      "type": "branch",
+      "name": "Qualification Decision Point",
+      "prompt": "Thank you for that information, {{contact_name}}. Let me see what options we have for you...",
+      "edges": [
+        {
+          "id": "branch_to_qualified",
+          "type": "conditional",
+          "target": "qualified_outcome",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "monthly_revenue",
+              "operator": "gte",
+              "value": 15000
+            },
+            {
+              "variable": "business_age_months",
+              "operator": "gte",
+              "value": 6
+            },
+            {
+              "variable": "loan_amount",
+              "operator": "gte",
+              "value": 10000
+            }
+          ]
+        },
+        {
+          "id": "branch_to_disqualified",
+          "type": "conditional",
+          "target": "disqualified_outcome",
+          "priority": 8,
+          "conditions": [
+            {
+              "variable": "business_age_months",
+              "operator": "lt",
+              "value": 6
+            }
+          ]
+        },
+        {
+          "id": "branch_to_callback",
+          "type": "conditional",
+          "target": "callback_outcome",
+          "priority": 5,
+          "conditions": [
+            {
+              "variable": "urgency",
+              "operator": "in",
+              "value": ["exploring", "no_rush"]
+            }
+          ]
+        },
+        {
+          "id": "branch_to_manual_review",
+          "type": "fallback",
+          "target": "manual_review_outcome",
+          "priority": 1
+        }
+      ],
+      "metadata": {
+        "crmAction": "create_deal"
+      }
+    },
+
+    {
+      "id": "qualified_outcome",
+      "type": "transfer",
+      "name": "Qualified - Transfer to Sales",
+      "prompt": "Great news, {{contact_name}}! Based on what you've shared, {{business_name}} looks like a strong fit for our funding programs. I'm going to connect you with one of our funding specialists right now who can discuss specific terms and get you approved quickly. Please hold for just a moment.",
+      "edges": [],
+      "metadata": {
+        "transferDepartment": "Sales Team",
+        "transferPhone": "+1-800-555-0100",
+        "endReason": "qualified_transfer",
+        "crmAction": "send_notification",
+        "notificationRecipients": ["sales@premiermca.com", "#qualified-leads"]
+      }
+    },
+
+    {
+      "id": "disqualified_outcome",
+      "type": "end",
+      "name": "Disqualified - Polite Decline",
+      "prompt": "Thank you for your interest, {{contact_name}}. While {{business_name}} is a bit early in its journey for our current programs - we typically work with businesses that have been operating for at least 6 months - I'd love to stay in touch. We'll add you to our newsletter and reach out in a few months to see how things are progressing. In the meantime, you'll receive an email with some resources for newer businesses. Is there anything else I can help you with today?",
+      "edges": [],
+      "metadata": {
+        "endReason": "too_early_stage",
+        "crmAction": "update_contact",
+        "notificationRecipients": ["nurture@premiermca.com"]
+      }
+    },
+
+    {
+      "id": "callback_outcome",
+      "type": "callback",
+      "name": "Future Follow-up",
+      "prompt": "I completely understand, {{contact_name}}. Since you're still in the exploration phase, I'll make sure one of our team members follows up with you in about a week. In the meantime, I'll send you an email with information about our programs and some case studies from businesses similar to {{business_name}}. What's the best email address to reach you?",
+      "variable": {
+        "name": "email",
+        "type": "email",
+        "label": "Email",
+        "validation": {
+          "required": false,
+          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+          "retryLimit": 2,
+          "retryMessage": "I didn't catch that email. Could you spell it out for me?"
+        },
+        "hubspotProperty": "email"
+      },
+      "edges": [
+        {
+          "id": "callback_to_end",
+          "type": "default",
+          "target": "callback_scheduled_end"
+        }
+      ],
+      "metadata": {
+        "crmAction": "update_contact"
+      }
+    },
+
+    {
+      "id": "callback_scheduled_end",
+      "type": "end",
+      "name": "Callback Scheduled",
+      "prompt": "Perfect, {{contact_name}}. I've got you down for a follow-up next week, and you'll receive that information at {{email}}. Thanks for calling Premier MCA, and have a great day!",
+      "edges": [],
+      "metadata": {
+        "endReason": "callback_scheduled"
+      }
+    },
+
+    {
+      "id": "manual_review_outcome",
+      "type": "end",
+      "name": "Manual Review Required",
+      "prompt": "Thank you for sharing that information, {{contact_name}}. {{business_name}} has some unique characteristics that I'd like our underwriting team to review personally. Within the next 2 business hours, you'll receive a call from one of our specialists who can dive deeper into your specific situation. Does that work for you?",
+      "edges": [],
+      "metadata": {
+        "endReason": "needs_manual_review",
+        "crmAction": "send_notification",
+        "notificationRecipients": ["underwriting@premiermca.com"]
+      }
+    },
+
+    {
+      "id": "angry_caller",
+      "type": "escalation",
+      "name": "Angry Caller Escalation",
+      "prompt": "I sincerely apologize for any frustration, {{contact_name}}. Let me connect you with a supervisor right away who can help resolve this. Please hold for just one moment.",
+      "edges": [],
+      "metadata": {
+        "transferDepartment": "Supervisor",
+        "transferPhone": "+1-800-555-0199",
+        "endReason": "escalated_angry",
+        "crmAction": "send_notification",
+        "notificationRecipients": ["support@premiermca.com", "#escalations"]
+      }
+    },
+
+    {
+      "id": "poor_connection",
+      "type": "fallback",
+      "name": "Poor Connection Handler",
+      "prompt": "I'm having trouble hearing you clearly. Let me try calling you back at a better time. What's the best number to reach you?",
+      "variable": {
+        "name": "callback_phone",
+        "type": "phone",
+        "label": "Callback Phone",
+        "validation": {
+          "required": false,
+          "pattern": "^\\+?[1-9]\\d{1,14}$",
+          "retryLimit": 1,
+          "retryMessage": "I'm still having trouble. I'll use the number you called from."
+        },
+        "hubspotProperty": "phone"
+      },
+      "edges": [
+        {
+          "id": "connection_to_end",
+          "type": "default",
+          "target": "poor_connection_end"
+        }
+      ],
+      "metadata": {
+        "crmAction": "update_contact"
+      }
+    },
+
+    {
+      "id": "poor_connection_end",
+      "type": "end",
+      "name": "Poor Connection - Call Back",
+      "prompt": "Thank you for your patience, {{contact_name}}. We'll call you back within the next hour at {{callback_phone}}. Have a great day!",
+      "edges": [],
+      "metadata": {
+        "endReason": "poor_connection_callback"
+      }
+    }
+  ],
+
+  "variables": [
+    {
+      "name": "contact_name",
+      "type": "string",
+      "label": "Contact Name",
+      "validation": {
+        "required": true
+      },
+      "hubspotProperty": "firstname"
+    },
+    {
+      "name": "business_name",
+      "type": "string",
+      "label": "Business Name",
+      "validation": {
+        "required": true
+      },
+      "hubspotProperty": "company"
+    },
+    {
+      "name": "loan_amount",
+      "type": "currency",
+      "label": "Funding Requested",
+      "validation": {
+        "required": true,
+        "min": 5000,
+        "max": 500000
+      },
+      "makeFieldId": "funding_amount",
+      "hubspotProperty": "funding_requested"
+    },
+    {
+      "name": "monthly_revenue",
+      "type": "currency",
+      "label": "Monthly Revenue",
+      "validation": {
+        "required": true,
+        "min": 0
+      },
+      "makeFieldId": "monthly_revenue",
+      "hubspotProperty": "monthly_revenue"
+    },
+    {
+      "name": "business_age_months",
+      "type": "number",
+      "label": "Time in Business (months)",
+      "validation": {
+        "required": true,
+        "min": 0
+      },
+      "makeFieldId": "time_in_business",
+      "hubspotProperty": "time_in_business"
+    },
+    {
+      "name": "urgency",
+      "type": "enum",
+      "label": "Urgency",
+      "validation": {
+        "required": true,
+        "enum": ["immediate", "this_week", "this_month", "exploring", "no_rush"]
+      },
+      "makeFieldId": "urgency",
+      "hubspotProperty": "deal_urgency"
+    },
+    {
+      "name": "email",
+      "type": "email",
+      "label": "Email",
+      "validation": {
+        "required": false,
+        "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+      },
+      "hubspotProperty": "email"
+    },
+    {
+      "name": "callback_phone",
+      "type": "phone",
+      "label": "Callback Phone",
+      "validation": {
+        "required": false,
+        "pattern": "^\\+?[1-9]\\d{1,14}$"
+      },
+      "hubspotProperty": "phone"
+    }
+  ],
+
+  "config": {
+    "maxCallDuration": 600,
+    "silenceTimeout": 10,
+    "retellAgentId": "agent_xxxxxxxxxxxxxxxx",
+    "retellVoice": "female-1",
+    "webhookUrl": "https://hook.us1.make.com/xxxxxxxxxxxxxxxx",
+    "webhookEvents": [
+      "call_ended",
+      "call_transferred"
+    ]
+  },
+
+  "integrations": {
+    "hubspot": {
+      "enabled": true,
+      "createContact": true,
+      "contactOwner": "sales@premiermca.com",
+      "dealPipeline": "default"
+    },
+    "notion": {
+      "enabled": true,
+      "databaseId": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    "slack": {
+      "enabled": true,
+      "channel": "#qualified-leads",
+      "notifyOn": ["qualified", "escalated"]
+    }
+  },
+
+  "costModel": {
+    "estimatedNodes": 8,
+    "estimatedDuration": 240,
+    "retellCostPerMinute": 0.10,
+    "estimatedCostPerCall": 0.40
+  },
+
+  "metadata": {
+    "author": "ResultantAI",
+    "createdAt": "2025-11-18T00:00:00Z",
+    "updatedAt": "2025-11-18T00:00:00Z",
+    "tags": ["mca", "lending", "qualification", "inbound", "retell"],
+    "buildTime": "90min"
+  }
+}

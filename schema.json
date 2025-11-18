@@ -1,0 +1,468 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Voice Agent Call Flow Schema",
+  "description": "Schema for defining voice agent conversation flows compatible with Retell API and Make.com integration",
+  "version": "1.0.0",
+
+  "definitions": {
+
+    "nodeTypes": {
+      "description": "Available node types for call flow state machine",
+      "enum": [
+        "greeting",
+        "question",
+        "branch",
+        "transfer",
+        "end",
+        "escalation",
+        "callback",
+        "fallback"
+      ],
+      "metadata": {
+        "greeting": "Initial greeting message when call connects",
+        "question": "Asks a question and collects a variable",
+        "branch": "Decision point based on conditions",
+        "transfer": "Transfers call to human agent or department",
+        "end": "Ends call with final message",
+        "escalation": "Handles angry/frustrated callers",
+        "callback": "Schedules callback for later",
+        "fallback": "Handles errors or unexpected responses"
+      }
+    },
+
+    "edgeTypes": {
+      "description": "Available edge types for transitions between nodes",
+      "enum": [
+        "conditional",
+        "fallback",
+        "escalation",
+        "default",
+        "timeout",
+        "error"
+      ],
+      "metadata": {
+        "conditional": "Transition based on variable value or condition",
+        "fallback": "Fallback path when no conditions match",
+        "escalation": "Emergency path for upset callers",
+        "default": "Default next step (no conditions)",
+        "timeout": "Triggered when no response received",
+        "error": "Triggered on system errors or poor connection"
+      }
+    },
+
+    "variableTypes": {
+      "description": "Data types for variables collected during call",
+      "enum": [
+        "string",
+        "number",
+        "currency",
+        "enum",
+        "boolean",
+        "date",
+        "phone",
+        "email"
+      ],
+      "metadata": {
+        "string": "Free-form text (names, descriptions)",
+        "number": "Numeric values (counts, scores, years)",
+        "currency": "Dollar amounts (revenue, funding requests)",
+        "enum": "Multiple choice from predefined options",
+        "boolean": "Yes/no questions",
+        "date": "Calendar dates",
+        "phone": "Phone numbers (formatted)",
+        "email": "Email addresses (validated)"
+      }
+    },
+
+    "validationRules": {
+      "type": "object",
+      "properties": {
+        "required": {
+          "type": "boolean",
+          "description": "Whether variable must be collected before proceeding"
+        },
+        "min": {
+          "type": "number",
+          "description": "Minimum value (for numbers/currency)"
+        },
+        "max": {
+          "type": "number",
+          "description": "Maximum value (for numbers/currency)"
+        },
+        "pattern": {
+          "type": "string",
+          "description": "Regex pattern for validation (for strings/phone/email)"
+        },
+        "enum": {
+          "type": "array",
+          "description": "Allowed values (for enum type)"
+        },
+        "retryLimit": {
+          "type": "number",
+          "default": 3,
+          "description": "Maximum retry attempts if validation fails"
+        },
+        "retryMessage": {
+          "type": "string",
+          "description": "Message to play when validation fails"
+        },
+        "fallbackNode": {
+          "type": "string",
+          "description": "Node to jump to if max retries exceeded"
+        }
+      }
+    },
+
+    "variable": {
+      "type": "object",
+      "required": ["name", "type"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Variable identifier (snake_case, e.g., 'loan_amount')"
+        },
+        "type": {
+          "$ref": "#/definitions/variableTypes"
+        },
+        "label": {
+          "type": "string",
+          "description": "Human-readable label for CRM display"
+        },
+        "validation": {
+          "$ref": "#/definitions/validationRules"
+        },
+        "makeFieldId": {
+          "type": "string",
+          "description": "Make.com field mapping ID"
+        },
+        "hubspotProperty": {
+          "type": "string",
+          "description": "HubSpot contact property name"
+        }
+      }
+    },
+
+    "condition": {
+      "type": "object",
+      "required": ["variable", "operator", "value"],
+      "properties": {
+        "variable": {
+          "type": "string",
+          "description": "Variable name to evaluate"
+        },
+        "operator": {
+          "enum": ["eq", "ne", "gt", "gte", "lt", "lte", "in", "contains", "exists"],
+          "description": "Comparison operator"
+        },
+        "value": {
+          "description": "Value to compare against (type depends on variable)"
+        },
+        "logic": {
+          "enum": ["AND", "OR"],
+          "default": "AND",
+          "description": "Logic operator for multiple conditions"
+        }
+      }
+    },
+
+    "edge": {
+      "type": "object",
+      "required": ["id", "type", "target"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique edge identifier"
+        },
+        "type": {
+          "$ref": "#/definitions/edgeTypes"
+        },
+        "target": {
+          "type": "string",
+          "description": "Target node ID"
+        },
+        "conditions": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/condition"
+          },
+          "description": "Conditions that must be met for this transition"
+        },
+        "priority": {
+          "type": "number",
+          "default": 0,
+          "description": "Evaluation priority (higher = evaluated first)"
+        }
+      }
+    },
+
+    "node": {
+      "type": "object",
+      "required": ["id", "type"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique node identifier"
+        },
+        "type": {
+          "$ref": "#/definitions/nodeTypes"
+        },
+        "name": {
+          "type": "string",
+          "description": "Human-readable node name"
+        },
+        "prompt": {
+          "type": "string",
+          "description": "What the AI says at this node (supports {{variables}})"
+        },
+        "variable": {
+          "$ref": "#/definitions/variable",
+          "description": "Variable to collect (for question nodes)"
+        },
+        "edges": {
+          "type": "array",
+          "items": {
+            "$ref": "#/definitions/edge"
+          },
+          "description": "Outgoing edges from this node"
+        },
+        "metadata": {
+          "type": "object",
+          "description": "Additional node-specific configuration",
+          "properties": {
+            "transferDepartment": {
+              "type": "string",
+              "description": "Department name for transfer nodes"
+            },
+            "transferPhone": {
+              "type": "string",
+              "description": "Phone number for transfer nodes"
+            },
+            "endReason": {
+              "type": "string",
+              "description": "Call termination reason"
+            },
+            "crmAction": {
+              "enum": ["create_contact", "update_contact", "create_deal", "send_notification"],
+              "description": "CRM action to trigger at this node"
+            },
+            "notificationRecipients": {
+              "type": "array",
+              "items": {"type": "string"},
+              "description": "Email/Slack recipients for notifications"
+            }
+          }
+        }
+      }
+    }
+  },
+
+  "type": "object",
+  "required": ["scenarioId", "name", "entryNode", "nodes", "variables"],
+  "properties": {
+
+    "scenarioId": {
+      "type": "string",
+      "description": "Unique identifier for this scenario (snake_case)"
+    },
+
+    "name": {
+      "type": "string",
+      "description": "Human-readable scenario name"
+    },
+
+    "description": {
+      "type": "string",
+      "description": "Scenario description for documentation"
+    },
+
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "default": "1.0.0",
+      "description": "Semantic version number"
+    },
+
+    "industry": {
+      "type": "string",
+      "description": "Target industry (e.g., 'mca_lending', 'real_estate', 'saas')"
+    },
+
+    "useCase": {
+      "enum": ["inbound_qualifier", "outbound_prospecting", "appointment_setter", "customer_support", "survey"],
+      "description": "Primary use case category"
+    },
+
+    "entryNode": {
+      "type": "string",
+      "description": "ID of the first node when call connects"
+    },
+
+    "nodes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/node"
+      },
+      "minItems": 2,
+      "description": "All nodes in the call flow"
+    },
+
+    "variables": {
+      "type": "array",
+      "items": {
+        "$ref": "#/definitions/variable"
+      },
+      "description": "All variables collected during call"
+    },
+
+    "config": {
+      "type": "object",
+      "description": "Scenario-level configuration",
+      "properties": {
+        "maxCallDuration": {
+          "type": "number",
+          "default": 600,
+          "description": "Maximum call length in seconds"
+        },
+        "silenceTimeout": {
+          "type": "number",
+          "default": 10,
+          "description": "Seconds of silence before prompting"
+        },
+        "retellAgentId": {
+          "type": "string",
+          "description": "Retell API agent ID"
+        },
+        "retellVoice": {
+          "enum": ["male-1", "male-2", "female-1", "female-2"],
+          "default": "female-1",
+          "description": "Voice selection for Retell"
+        },
+        "webhookUrl": {
+          "type": "string",
+          "format": "uri",
+          "description": "Make.com webhook endpoint"
+        },
+        "webhookEvents": {
+          "type": "array",
+          "items": {
+            "enum": ["call_started", "variable_collected", "call_ended", "call_transferred", "call_error"]
+          },
+          "default": ["call_ended"],
+          "description": "Which events trigger webhook calls"
+        }
+      }
+    },
+
+    "integrations": {
+      "type": "object",
+      "description": "Third-party integration settings",
+      "properties": {
+        "hubspot": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "createContact": {
+              "type": "boolean",
+              "default": true,
+              "description": "Auto-create contact after call"
+            },
+            "contactOwner": {
+              "type": "string",
+              "description": "Default contact owner email"
+            },
+            "dealPipeline": {
+              "type": "string",
+              "description": "Pipeline ID for qualified leads"
+            }
+          }
+        },
+        "notion": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "databaseId": {
+              "type": "string",
+              "description": "Notion database ID for call logs"
+            }
+          }
+        },
+        "slack": {
+          "type": "object",
+          "properties": {
+            "enabled": {
+              "type": "boolean",
+              "default": false
+            },
+            "channel": {
+              "type": "string",
+              "description": "Channel for qualified lead notifications"
+            },
+            "notifyOn": {
+              "type": "array",
+              "items": {
+                "enum": ["qualified", "escalated", "all"]
+              },
+              "default": ["qualified"]
+            }
+          }
+        }
+      }
+    },
+
+    "costModel": {
+      "type": "object",
+      "description": "Cost estimation for this scenario",
+      "properties": {
+        "estimatedNodes": {
+          "type": "number",
+          "description": "Average nodes traversed per call"
+        },
+        "estimatedDuration": {
+          "type": "number",
+          "description": "Average call duration in seconds"
+        },
+        "retellCostPerMinute": {
+          "type": "number",
+          "default": 0.10,
+          "description": "Retell API cost per minute"
+        },
+        "estimatedCostPerCall": {
+          "type": "number",
+          "description": "Total estimated cost per call"
+        }
+      }
+    },
+
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata for documentation/testing",
+      "properties": {
+        "author": {
+          "type": "string"
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "tags": {
+          "type": "array",
+          "items": {"type": "string"}
+        },
+        "buildTime": {
+          "type": "string",
+          "description": "Estimated time to build this scenario (e.g., '90min')"
+        }
+      }
+    }
+  }
+}
