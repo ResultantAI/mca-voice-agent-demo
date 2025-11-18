@@ -1,0 +1,12 @@
+{
+  "call_purpose": "schedule_new",
+  "meeting_type": "video",
+  "meeting_duration": "30min",
+  "time_preference": "morning",
+  "selected_time": "Tomorrow at 10am",
+  "timezone_confirmed": true,
+  "email": "alex@techstartup.com",
+  "phone": "+14155551234",
+  "wants_reminders": true,
+  "reminder_method": "both"
+}

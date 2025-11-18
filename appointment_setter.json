@@ -1,0 +1,744 @@
+{
+  "scenarioId": "premier_mca_appointment_setter",
+  "name": "Premier MCA - Appointment Setter & Confirmation",
+  "description": "Automated appointment scheduling and confirmation system with rescheduling support, calendar integration, and reminder preferences. Works for both new appointment booking and existing appointment confirmation.",
+  "version": "1.0.0",
+  "industry": "mca_lending",
+  "useCase": "appointment_setter",
+  "entryNode": "greeting_identify_purpose",
+
+  "nodes": [
+    {
+      "id": "greeting_identify_purpose",
+      "type": "greeting",
+      "name": "Identify Call Purpose",
+      "prompt": "Hi, this is Sarah from Premier MCA. I'm calling to help you schedule a consultation with one of our funding specialists. Do you already have an appointment scheduled, or would you like to book one now?",
+      "variable": {
+        "name": "call_purpose",
+        "type": "enum",
+        "label": "Call Purpose",
+        "validation": {
+          "required": true,
+          "enum": ["confirm_existing", "schedule_new", "reschedule", "cancel", "not_interested"],
+          "retryLimit": 2
+        }
+      },
+      "edges": [
+        {
+          "id": "purpose_to_confirm",
+          "type": "conditional",
+          "target": "confirm_existing_appointment",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "call_purpose",
+              "operator": "eq",
+              "value": "confirm_existing"
+            }
+          ]
+        },
+        {
+          "id": "purpose_to_reschedule",
+          "type": "conditional",
+          "target": "offer_reschedule_slots",
+          "priority": 9,
+          "conditions": [
+            {
+              "variable": "call_purpose",
+              "operator": "eq",
+              "value": "reschedule"
+            }
+          ]
+        },
+        {
+          "id": "purpose_to_cancel",
+          "type": "conditional",
+          "target": "handle_cancellation",
+          "priority": 8,
+          "conditions": [
+            {
+              "variable": "call_purpose",
+              "operator": "eq",
+              "value": "cancel"
+            }
+          ]
+        },
+        {
+          "id": "purpose_to_not_interested",
+          "type": "conditional",
+          "target": "not_interested_end",
+          "priority": 7,
+          "conditions": [
+            {
+              "variable": "call_purpose",
+              "operator": "eq",
+              "value": "not_interested"
+            }
+          ]
+        },
+        {
+          "id": "purpose_to_schedule",
+          "type": "default",
+          "target": "ask_meeting_type"
+        }
+      ]
+    },
+
+    {
+      "id": "confirm_existing_appointment",
+      "type": "question",
+      "name": "Confirm Existing Appointment",
+      "prompt": "Perfect! I have you scheduled for a 15-minute funding consultation. Just to confirm, you're all set for the appointment - does that still work for you?",
+      "variable": {
+        "name": "appointment_confirmed",
+        "type": "boolean",
+        "label": "Appointment Confirmed",
+        "validation": {
+          "required": true
+        }
+      },
+      "edges": [
+        {
+          "id": "confirm_yes_to_reminder",
+          "type": "conditional",
+          "target": "set_reminder_preferences",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "appointment_confirmed",
+              "operator": "eq",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "confirm_no_to_reschedule",
+          "type": "default",
+          "target": "offer_reschedule_slots"
+        }
+      ]
+    },
+
+    {
+      "id": "ask_meeting_type",
+      "type": "question",
+      "name": "Select Meeting Type",
+      "prompt": "Great! We offer consultations via phone call, video conference, or in-person at our office. Which would you prefer?",
+      "variable": {
+        "name": "meeting_type",
+        "type": "enum",
+        "label": "Meeting Type",
+        "validation": {
+          "required": true,
+          "enum": ["phone", "video", "in_person"],
+          "retryLimit": 2
+        },
+        "hubspotProperty": "meeting_type"
+      },
+      "edges": [
+        {
+          "id": "meeting_type_to_duration",
+          "type": "default",
+          "target": "ask_preferred_duration"
+        }
+      ]
+    },
+
+    {
+      "id": "ask_preferred_duration",
+      "type": "question",
+      "name": "Select Meeting Duration",
+      "prompt": "Perfect. We have 15-minute quick consultations or 30-minute in-depth reviews available. Which works better for you?",
+      "variable": {
+        "name": "meeting_duration",
+        "type": "enum",
+        "label": "Meeting Duration",
+        "validation": {
+          "required": true,
+          "enum": ["15min", "30min"],
+          "retryLimit": 2
+        },
+        "hubspotProperty": "meeting_duration"
+      },
+      "edges": [
+        {
+          "id": "duration_to_availability",
+          "type": "default",
+          "target": "check_availability"
+        }
+      ]
+    },
+
+    {
+      "id": "check_availability",
+      "type": "question",
+      "name": "Check Availability",
+      "prompt": "Great! Let me check our availability. Do you prefer mornings or afternoons?",
+      "variable": {
+        "name": "time_preference",
+        "type": "enum",
+        "label": "Time Preference",
+        "validation": {
+          "required": true,
+          "enum": ["morning", "afternoon", "flexible"],
+          "retryLimit": 2
+        }
+      },
+      "edges": [
+        {
+          "id": "availability_to_slots",
+          "type": "default",
+          "target": "offer_time_slots"
+        }
+      ]
+    },
+
+    {
+      "id": "offer_time_slots",
+      "type": "question",
+      "name": "Offer Available Slots",
+      "prompt": "Perfect! I have availability tomorrow at 10am, Wednesday at 2pm, or Thursday at 11am. Which of those works best for you?",
+      "variable": {
+        "name": "selected_time",
+        "type": "string",
+        "label": "Selected Time Slot",
+        "validation": {
+          "required": true,
+          "retryLimit": 2,
+          "retryMessage": "Sorry, which day and time works for you?"
+        },
+        "hubspotProperty": "appointment_datetime"
+      },
+      "edges": [
+        {
+          "id": "slot_to_timezone",
+          "type": "default",
+          "target": "confirm_timezone"
+        }
+      ]
+    },
+
+    {
+      "id": "confirm_timezone",
+      "type": "question",
+      "name": "Confirm Timezone",
+      "prompt": "Great! Just to confirm, you're in {{timezone}} timezone, correct?",
+      "variable": {
+        "name": "timezone_confirmed",
+        "type": "boolean",
+        "label": "Timezone Confirmed",
+        "validation": {
+          "required": true
+        }
+      },
+      "edges": [
+        {
+          "id": "timezone_yes_to_contact",
+          "type": "conditional",
+          "target": "collect_contact_info",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "timezone_confirmed",
+              "operator": "eq",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "timezone_no_to_correct",
+          "type": "default",
+          "target": "ask_correct_timezone"
+        }
+      ]
+    },
+
+    {
+      "id": "ask_correct_timezone",
+      "type": "question",
+      "name": "Get Correct Timezone",
+      "prompt": "No problem! What timezone are you in?",
+      "variable": {
+        "name": "timezone",
+        "type": "string",
+        "label": "Timezone",
+        "validation": {
+          "required": true
+        },
+        "hubspotProperty": "timezone"
+      },
+      "edges": [
+        {
+          "id": "correct_timezone_to_contact",
+          "type": "default",
+          "target": "collect_contact_info"
+        }
+      ]
+    },
+
+    {
+      "id": "collect_contact_info",
+      "type": "question",
+      "name": "Collect Email",
+      "prompt": "Perfect! I'll send you a calendar invite with all the details. What's the best email for that?",
+      "variable": {
+        "name": "email",
+        "type": "email",
+        "label": "Email",
+        "validation": {
+          "required": true,
+          "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$",
+          "retryLimit": 2,
+          "retryMessage": "Sorry, I didn't catch that. Can you spell out your email?"
+        },
+        "hubspotProperty": "email"
+      },
+      "edges": [
+        {
+          "id": "email_to_phone",
+          "type": "default",
+          "target": "collect_phone_number"
+        }
+      ]
+    },
+
+    {
+      "id": "collect_phone_number",
+      "type": "question",
+      "name": "Collect Phone Number",
+      "prompt": "Great! And what's the best phone number to reach you at in case we need to follow up?",
+      "variable": {
+        "name": "phone",
+        "type": "phone",
+        "label": "Phone Number",
+        "validation": {
+          "required": false,
+          "pattern": "^\\+?[1-9]\\d{1,14}$",
+          "retryLimit": 2
+        },
+        "hubspotProperty": "phone"
+      },
+      "edges": [
+        {
+          "id": "phone_to_reminder",
+          "type": "default",
+          "target": "set_reminder_preferences"
+        }
+      ]
+    },
+
+    {
+      "id": "set_reminder_preferences",
+      "type": "question",
+      "name": "Set Reminder Preferences",
+      "prompt": "Excellent! Would you like me to send you a reminder before the appointment? I can text or email you 24 hours before and 1 hour before.",
+      "variable": {
+        "name": "wants_reminders",
+        "type": "boolean",
+        "label": "Wants Reminders",
+        "validation": {
+          "required": true
+        }
+      },
+      "edges": [
+        {
+          "id": "reminder_yes_to_method",
+          "type": "conditional",
+          "target": "ask_reminder_method",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "wants_reminders",
+              "operator": "eq",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "reminder_no_to_confirm",
+          "type": "default",
+          "target": "appointment_confirmed_end"
+        }
+      ]
+    },
+
+    {
+      "id": "ask_reminder_method",
+      "type": "question",
+      "name": "Select Reminder Method",
+      "prompt": "Perfect! Would you prefer reminders via text message or email?",
+      "variable": {
+        "name": "reminder_method",
+        "type": "enum",
+        "label": "Reminder Method",
+        "validation": {
+          "required": true,
+          "enum": ["text", "email", "both"]
+        }
+      },
+      "edges": [
+        {
+          "id": "method_to_confirm",
+          "type": "default",
+          "target": "appointment_confirmed_end"
+        }
+      ]
+    },
+
+    {
+      "id": "appointment_confirmed_end",
+      "type": "end",
+      "name": "Appointment Confirmed",
+      "prompt": "Perfect! You're all set for {{selected_time}}. You'll receive a calendar invite at {{email}} with a {{meeting_type}} link. We'll see you then. Looking forward to helping your business!",
+      "edges": [],
+      "metadata": {
+        "endReason": "appointment_confirmed",
+        "crmAction": "create_deal",
+        "notificationRecipients": ["appointments@premiermca.com", "#scheduled-appointments"]
+      }
+    },
+
+    {
+      "id": "offer_reschedule_slots",
+      "type": "question",
+      "name": "Offer Reschedule Options",
+      "prompt": "No problem at all! Let me find a better time for you. I have openings tomorrow at 10am, Wednesday at 2pm, or Friday at 3pm. Do any of those work?",
+      "variable": {
+        "name": "reschedule_time",
+        "type": "string",
+        "label": "Rescheduled Time",
+        "validation": {
+          "required": false,
+          "retryLimit": 2
+        },
+        "hubspotProperty": "appointment_datetime"
+      },
+      "edges": [
+        {
+          "id": "reschedule_found_to_confirm",
+          "type": "conditional",
+          "target": "reschedule_confirmed_end",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "reschedule_time",
+              "operator": "exists",
+              "value": null
+            }
+          ]
+        },
+        {
+          "id": "reschedule_none_to_callback",
+          "type": "default",
+          "target": "reschedule_callback"
+        }
+      ]
+    },
+
+    {
+      "id": "reschedule_callback",
+      "type": "callback",
+      "name": "Schedule Reschedule Callback",
+      "prompt": "I understand those times don't work. Would you like me to have someone call you back to find a time that fits your schedule better?",
+      "variable": {
+        "name": "wants_callback",
+        "type": "boolean",
+        "label": "Wants Callback"
+      },
+      "edges": [
+        {
+          "id": "callback_yes_to_end",
+          "type": "conditional",
+          "target": "callback_scheduled_end",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "wants_callback",
+              "operator": "eq",
+              "value": true
+            }
+          ]
+        },
+        {
+          "id": "callback_no_to_cancel",
+          "type": "default",
+          "target": "handle_cancellation"
+        }
+      ]
+    },
+
+    {
+      "id": "reschedule_confirmed_end",
+      "type": "end",
+      "name": "Reschedule Confirmed",
+      "prompt": "Perfect! I've moved your appointment to {{reschedule_time}}. You'll receive an updated calendar invite shortly. See you then!",
+      "edges": [],
+      "metadata": {
+        "endReason": "rescheduled",
+        "crmAction": "update_contact"
+      }
+    },
+
+    {
+      "id": "callback_scheduled_end",
+      "type": "end",
+      "name": "Callback for Reschedule",
+      "prompt": "Absolutely. Someone from our team will reach out within 24 hours to find a time that works perfectly for you. Thanks for your patience!",
+      "edges": [],
+      "metadata": {
+        "endReason": "callback_requested",
+        "crmAction": "update_contact"
+      }
+    },
+
+    {
+      "id": "handle_cancellation",
+      "type": "question",
+      "name": "Handle Cancellation",
+      "prompt": "I understand. May I ask if you'd like to cancel permanently, or would you prefer to reschedule for a later date when things settle down?",
+      "variable": {
+        "name": "cancellation_type",
+        "type": "enum",
+        "label": "Cancellation Type",
+        "validation": {
+          "required": true,
+          "enum": ["cancel_permanent", "reschedule_later", "not_sure"]
+        }
+      },
+      "edges": [
+        {
+          "id": "cancel_perm_to_end",
+          "type": "conditional",
+          "target": "cancellation_confirmed_end",
+          "priority": 10,
+          "conditions": [
+            {
+              "variable": "cancellation_type",
+              "operator": "eq",
+              "value": "cancel_permanent"
+            }
+          ]
+        },
+        {
+          "id": "cancel_later_to_nurture",
+          "type": "conditional",
+          "target": "nurture_future_end",
+          "priority": 8,
+          "conditions": [
+            {
+              "variable": "cancellation_type",
+              "operator": "in",
+              "value": ["reschedule_later", "not_sure"]
+            }
+          ]
+        },
+        {
+          "id": "cancel_fallback",
+          "type": "default",
+          "target": "cancellation_confirmed_end"
+        }
+      ]
+    },
+
+    {
+      "id": "cancellation_confirmed_end",
+      "type": "end",
+      "name": "Cancellation Confirmed",
+      "prompt": "No problem at all. I've cancelled your appointment. If you change your mind or need funding assistance in the future, feel free to reach back out. Have a great day!",
+      "edges": [],
+      "metadata": {
+        "endReason": "cancelled",
+        "crmAction": "update_contact"
+      }
+    },
+
+    {
+      "id": "nurture_future_end",
+      "type": "end",
+      "name": "Nurture for Future",
+      "prompt": "That makes complete sense. I'll make a note and we'll check back with you in a few weeks. In the meantime, if anything changes, you can always reach out. Take care!",
+      "edges": [],
+      "metadata": {
+        "endReason": "nurture_future",
+        "crmAction": "update_contact"
+      }
+    },
+
+    {
+      "id": "not_interested_end",
+      "type": "end",
+      "name": "Not Interested",
+      "prompt": "I totally understand. Thanks for letting me know, and have a great day!",
+      "edges": [],
+      "metadata": {
+        "endReason": "not_interested",
+        "crmAction": "update_contact"
+      }
+    }
+  ],
+
+  "variables": [
+    {
+      "name": "call_purpose",
+      "type": "enum",
+      "label": "Call Purpose",
+      "validation": {
+        "required": true,
+        "enum": ["confirm_existing", "schedule_new", "reschedule", "cancel", "not_interested"]
+      }
+    },
+    {
+      "name": "appointment_confirmed",
+      "type": "boolean",
+      "label": "Appointment Confirmed"
+    },
+    {
+      "name": "meeting_type",
+      "type": "enum",
+      "label": "Meeting Type",
+      "validation": {
+        "enum": ["phone", "video", "in_person"]
+      },
+      "hubspotProperty": "meeting_type"
+    },
+    {
+      "name": "meeting_duration",
+      "type": "enum",
+      "label": "Meeting Duration",
+      "validation": {
+        "enum": ["15min", "30min"]
+      },
+      "hubspotProperty": "meeting_duration"
+    },
+    {
+      "name": "time_preference",
+      "type": "enum",
+      "label": "Time Preference",
+      "validation": {
+        "enum": ["morning", "afternoon", "flexible"]
+      }
+    },
+    {
+      "name": "selected_time",
+      "type": "string",
+      "label": "Selected Time Slot",
+      "hubspotProperty": "appointment_datetime"
+    },
+    {
+      "name": "timezone",
+      "type": "string",
+      "label": "Timezone",
+      "hubspotProperty": "timezone"
+    },
+    {
+      "name": "timezone_confirmed",
+      "type": "boolean",
+      "label": "Timezone Confirmed"
+    },
+    {
+      "name": "email",
+      "type": "email",
+      "label": "Email",
+      "validation": {
+        "pattern": "^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$"
+      },
+      "hubspotProperty": "email"
+    },
+    {
+      "name": "phone",
+      "type": "phone",
+      "label": "Phone Number",
+      "validation": {
+        "pattern": "^\\+?[1-9]\\d{1,14}$"
+      },
+      "hubspotProperty": "phone"
+    },
+    {
+      "name": "wants_reminders",
+      "type": "boolean",
+      "label": "Wants Reminders"
+    },
+    {
+      "name": "reminder_method",
+      "type": "enum",
+      "label": "Reminder Method",
+      "validation": {
+        "enum": ["text", "email", "both"]
+      }
+    },
+    {
+      "name": "reschedule_time",
+      "type": "string",
+      "label": "Rescheduled Time",
+      "hubspotProperty": "appointment_datetime"
+    },
+    {
+      "name": "wants_callback",
+      "type": "boolean",
+      "label": "Wants Callback for Reschedule"
+    },
+    {
+      "name": "cancellation_type",
+      "type": "enum",
+      "label": "Cancellation Type",
+      "validation": {
+        "enum": ["cancel_permanent", "reschedule_later", "not_sure"]
+      }
+    }
+  ],
+
+  "config": {
+    "maxCallDuration": 300,
+    "silenceTimeout": 10,
+    "retellAgentId": "agent_xxxxxxxxxxxxxxxx",
+    "retellVoice": "female-1",
+    "webhookUrl": "https://hook.us1.make.com/xxxxxxxxxxxxxxxx",
+    "webhookEvents": [
+      "call_ended"
+    ]
+  },
+
+  "integrations": {
+    "hubspot": {
+      "enabled": true,
+      "createContact": true,
+      "contactOwner": "appointments@premiermca.com",
+      "dealPipeline": "appointments"
+    },
+    "notion": {
+      "enabled": true,
+      "databaseId": "xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    },
+    "slack": {
+      "enabled": true,
+      "channel": "#appointments",
+      "notifyOn": ["qualified"]
+    },
+    "calendly": {
+      "enabled": true,
+      "apiKey": "xxxxxxxxxxxxxxxx",
+      "eventTypeId": "xxxxxxxxxxxxxxxx",
+      "description": "Calendly integration for automated booking"
+    },
+    "google_calendar": {
+      "enabled": false,
+      "calendarId": "primary",
+      "description": "Google Calendar integration as alternative to Calendly"
+    }
+  },
+
+  "costModel": {
+    "estimatedNodes": 9,
+    "estimatedDuration": 180,
+    "retellCostPerMinute": 0.10,
+    "estimatedCostPerCall": 0.30
+  },
+
+  "metadata": {
+    "author": "ResultantAI",
+    "createdAt": "2025-11-18T00:00:00Z",
+    "updatedAt": "2025-11-18T00:00:00Z",
+    "tags": ["mca", "lending", "appointments", "scheduling", "calendly", "retell"],
+    "buildTime": "90min"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "call_purpose": "confirm_existing",
+  "appointment_confirmed": true,
+  "wants_reminders": true,
+  "reminder_method": "email"
+}
