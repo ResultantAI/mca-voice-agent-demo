@@ -1,0 +1,269 @@
+{
+  "agent_name": "mca_outbound_prospecting",
+  "version": "1.0.0",
+  "description": "AI voice agent for outbound prospecting to potential MCA clients. Focuses on initial contact, interest qualification, and appointment setting for sales team.",
+  "agent_config": {
+    "voice": {
+      "provider": "elevenlabs",
+      "voice_id": "alex_professional",
+      "speed": 1.0,
+      "pitch": 0
+    },
+    "language": "en-US",
+    "personality": {
+      "tone": "friendly",
+      "formality": "business_casual",
+      "verbosity": "concise"
+    },
+    "interruption_sensitivity": "high",
+    "silence_timeout": 2
+  },
+  "conversation_flow": {
+    "greeting": {
+      "script": "Hi, is this {{contact_name}}? This is Alex calling from VelocityMCA. I'm reaching out because we help businesses in the {{business_type}} industry secure fast funding for growth and expansion. Do you have just 60 seconds? I promise to keep it brief.",
+      "variants": [
+        "Good morning {{contact_name}}, this is Alex from VelocityMCA. We specialize in helping {{business_type}} businesses access quick capital for equipment, inventory, or expansion. I know you're busy - can I ask you just two quick questions?",
+        "Hi {{contact_name}}, Alex here from VelocityMCA. We've been working with a lot of {{business_type}} businesses lately helping them secure funding without the traditional bank hassle. Would you be open to a quick conversation about your business?"
+      ],
+      "time_based": true
+    },
+    "questions": [
+      {
+        "id": "contact_name",
+        "question": "Just to confirm, am I speaking with the owner or decision maker?",
+        "field": "contact_name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "business_name",
+        "question": "Great! And what's the name of your business?",
+        "field": "business_name",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "business_type",
+        "question": "Perfect. What industry are you in?",
+        "field": "business_type",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "time_in_business",
+        "question": "How long have you been in business?",
+        "field": "time_in_business_months",
+        "type": "number",
+        "required": true,
+        "validation": {
+          "min": 0,
+          "max": 600
+        }
+      },
+      {
+        "id": "monthly_revenue",
+        "question": "What's your approximate monthly revenue? Just ballpark is fine.",
+        "field": "monthly_revenue",
+        "type": "currency",
+        "required": true,
+        "validation": {
+          "min": 0,
+          "max": 10000000
+        }
+      },
+      {
+        "id": "interest_in_funding",
+        "question": "Have you considered business funding or a merchant cash advance in the past 6 months?",
+        "field": "interest_in_funding",
+        "type": "choice",
+        "required": true,
+        "validation": {
+          "choices": [
+            "yes_actively_looking",
+            "yes_but_not_urgent",
+            "considered_it",
+            "no_not_interested"
+          ]
+        }
+      },
+      {
+        "id": "funding_need",
+        "question": "If you were to get funding, what would you use it for? Equipment, inventory, marketing, or something else?",
+        "field": "funding_purpose",
+        "type": "choice",
+        "required": false,
+        "validation": {
+          "choices": [
+            "equipment",
+            "inventory",
+            "expansion",
+            "marketing",
+            "working_capital",
+            "hiring",
+            "other"
+          ]
+        }
+      },
+      {
+        "id": "contact_phone",
+        "question": "Perfect. What's the best number to reach you at for a follow-up?",
+        "field": "phone",
+        "type": "text",
+        "required": true,
+        "validation": {
+          "pattern": "^\\+?1?\\d{10,14}$"
+        }
+      },
+      {
+        "id": "contact_email",
+        "question": "And your email address so I can send you some information?",
+        "field": "email",
+        "type": "text",
+        "required": false,
+        "validation": {
+          "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        }
+      }
+    ],
+    "objection_handling": [
+      {
+        "trigger": "not interested|no thanks|don't need",
+        "response": "I completely understand. Most of our best clients said the same thing initially. I'm not trying to sell you anything today - I just want to make sure you have our information for when the timing is better. Can I at least send you a quick email with our rates so you have it on file?"
+      },
+      {
+        "trigger": "too busy|bad time|call back",
+        "response": "I totally get it - you're busy running your business. That's exactly why this takes just 60 seconds. Let me ask you one question: if you could access $25,000 to $100,000 in funding within 48 hours, would that be something worth a 5-minute conversation next week?"
+      },
+      {
+        "trigger": "already have funding|working with someone",
+        "response": "That's great that you have funding options. Many of our clients use us as a backup or for additional capital when they need it quickly. Would it make sense to just get you pre-qualified so you have another option available when you need it?"
+      },
+      {
+        "trigger": "how did you get my number|take me off list",
+        "response": "Absolutely, I apologize if this is a bad time. We reach out to businesses in your area that might benefit from our services. I can definitely remove you from our list. Before I do, is it the funding that's not relevant, or just the timing that's off?"
+      },
+      {
+        "trigger": "send information|email me",
+        "response": "I'd be happy to send you information. Most business owners find a quick 3-minute conversation more helpful than reading an email. How about I ask you just two quick questions so I can send you the most relevant information for your specific situation?"
+      },
+      {
+        "trigger": "what's this about|why are you calling",
+        "response": "Great question! We help business owners like yourself access working capital quickly - usually within 24 to 48 hours. Unlike banks that take weeks and require tons of paperwork, we can often approve you the same day. Is that something that would be helpful for your business?"
+      }
+    ],
+    "closing": {
+      "qualified": "Excellent, {{contact_name}}! Based on what you've shared, it sounds like you could be a great fit for our program. Here's what I'd like to do: I'm going to have one of our funding specialists, {{assigned_rep_name}}, give you a call within the next 24 hours at {{phone}} to discuss specific terms and answer any questions. They'll have all your information, so it'll be a quick 5-minute conversation. Does that work for you?",
+      "unqualified": "I really appreciate your time today, {{contact_name}}. Based on our current program requirements, it sounds like we might not be the best fit right now. However, I'm going to add your information to our system and check back in with you in about {{follow_up_months}} months to see how things are going. In the meantime, I'll send you an email with some resources that might be helpful. Does that sound good?",
+      "undecided": "No problem at all, {{contact_name}}. I understand you need to {{objection_reason}}. What I'll do is send you an email with information about our programs and typical terms. You can review it on your own time, and if you're interested, just reply to that email or give us a call back. There's zero obligation. Sound fair?"
+    }
+  },
+  "qualification_rules": {
+    "criteria": [
+      {
+        "field": "time_in_business_months",
+        "operator": "greater_than_or_equal",
+        "value": 6,
+        "required": true,
+        "weight": 20
+      },
+      {
+        "field": "monthly_revenue",
+        "operator": "greater_than_or_equal",
+        "value": 15000,
+        "required": true,
+        "weight": 30
+      },
+      {
+        "field": "interest_in_funding",
+        "operator": "in_list",
+        "value": ["yes_actively_looking", "yes_but_not_urgent", "considered_it"],
+        "required": false,
+        "weight": 35
+      },
+      {
+        "field": "funding_purpose",
+        "operator": "in_list",
+        "value": ["equipment", "inventory", "expansion", "marketing", "working_capital", "hiring"],
+        "required": false,
+        "weight": 15
+      }
+    ],
+    "qualification_threshold": 60,
+    "auto_disqualify": [
+      {
+        "field": "time_in_business_months",
+        "operator": "less_than",
+        "value": 3
+      },
+      {
+        "field": "monthly_revenue",
+        "operator": "less_than",
+        "value": 8000
+      },
+      {
+        "field": "interest_in_funding",
+        "operator": "equals",
+        "value": "no_not_interested"
+      }
+    ]
+  },
+  "integration": {
+    "crm": {
+      "provider": "hubspot",
+      "actions": {
+        "qualified": {
+          "create_lead": true,
+          "assign_to": "outbound_sales_team",
+          "tags": [
+            "outbound_prospect",
+            "ai_qualified",
+            "warm_lead"
+          ],
+          "send_notification": true
+        },
+        "unqualified": {
+          "create_lead": true,
+          "add_to_nurture": true,
+          "nurture_campaign_id": "outbound_nurture_6month"
+        }
+      },
+      "field_mapping": {
+        "contact_name": "firstname,lastname",
+        "business_name": "company",
+        "business_type": "industry",
+        "time_in_business_months": "time_in_business",
+        "monthly_revenue": "monthly_revenue",
+        "interest_in_funding": "lead_temperature",
+        "funding_purpose": "funding_use_case",
+        "phone": "phone",
+        "email": "email"
+      }
+    },
+    "notifications": {
+      "email": [
+        "chris@resultantai.com",
+        "outbound@velocitymca.com"
+      ],
+      "sms": [
+        "+15551234567"
+      ],
+      "webhook": "https://api.velocitymca.com/webhooks/outbound_lead"
+    }
+  },
+  "analytics": {
+    "track_metrics": [
+      "call_duration",
+      "qualification_rate",
+      "drop_off_point",
+      "objection_frequency",
+      "conversion_time"
+    ],
+    "reporting_interval": "daily"
+  },
+  "compliance": {
+    "record_calls": true,
+    "recording_disclosure": "This call may be recorded for quality assurance and training purposes.",
+    "gdpr_compliant": true,
+    "data_retention_days": 730
+  }
+}

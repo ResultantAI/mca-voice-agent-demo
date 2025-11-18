@@ -1,0 +1,271 @@
+{
+  "agent_name": "mca_appointment_setter",
+  "version": "1.0.0",
+  "description": "AI voice agent for scheduling consultations with qualified MCA leads. Handles calendar coordination, confirmation, and rescheduling requests.",
+  "agent_config": {
+    "voice": {
+      "provider": "elevenlabs",
+      "voice_id": "rachel_friendly",
+      "speed": 1.05,
+      "pitch": 2
+    },
+    "language": "en-US",
+    "personality": {
+      "tone": "friendly",
+      "formality": "business_casual",
+      "verbosity": "concise"
+    },
+    "interruption_sensitivity": "medium",
+    "silence_timeout": 3
+  },
+  "conversation_flow": {
+    "greeting": {
+      "script": "Hi {{contact_name}}, this is Rachel calling from VelocityMCA. You recently inquired about business funding for {{business_name}}. I'd love to schedule a brief consultation with one of our funding specialists to discuss your options. Do you have your calendar handy?",
+      "variants": [
+        "Good afternoon {{contact_name}}! This is Rachel from VelocityMCA. Thanks for your interest in our MCA program. I'm calling to set up a quick 15-minute consultation to go over funding options for {{business_name}}. When works best for you?",
+        "Hi {{contact_name}}, Rachel here from VelocityMCA. Following up on your funding inquiry for {{business_name}}. I'd like to get you on the calendar with one of our specialists this week. What's your availability like?"
+      ],
+      "time_based": true
+    },
+    "questions": [
+      {
+        "id": "confirm_contact",
+        "question": "Just to confirm, is this still a good number to reach you at?",
+        "field": "phone_confirmed",
+        "type": "boolean",
+        "required": true
+      },
+      {
+        "id": "still_interested",
+        "question": "Are you still looking for business funding for {{business_name}}?",
+        "field": "still_interested",
+        "type": "boolean",
+        "required": true
+      },
+      {
+        "id": "urgency_check",
+        "question": "Great! How soon are you looking to secure funding?",
+        "field": "urgency",
+        "type": "choice",
+        "required": true,
+        "validation": {
+          "choices": [
+            "immediately",
+            "within_1_week",
+            "within_2_weeks",
+            "within_1_month",
+            "just_exploring"
+          ]
+        }
+      },
+      {
+        "id": "funding_amount",
+        "question": "And just to make sure we have the right specialist for you, what funding amount are you looking for?",
+        "field": "funding_amount_requested",
+        "type": "currency",
+        "required": false,
+        "validation": {
+          "min": 5000,
+          "max": 500000
+        }
+      },
+      {
+        "id": "preferred_day",
+        "question": "Perfect. Would you prefer to meet earlier this week or later this week?",
+        "field": "preferred_day",
+        "type": "choice",
+        "required": true,
+        "validation": {
+          "choices": [
+            "today",
+            "tomorrow",
+            "this_week_early",
+            "this_week_late",
+            "next_week"
+          ]
+        }
+      },
+      {
+        "id": "preferred_time",
+        "question": "And what time of day works best for you? Morning, afternoon, or evening?",
+        "field": "preferred_time",
+        "type": "choice",
+        "required": true,
+        "validation": {
+          "choices": [
+            "morning_9_12",
+            "afternoon_12_3",
+            "afternoon_3_6",
+            "evening_6_8"
+          ]
+        }
+      },
+      {
+        "id": "appointment_date",
+        "question": "I have availability on {{suggested_date}} at {{suggested_time}}. Does that work for you?",
+        "field": "appointment_datetime",
+        "type": "text",
+        "required": true
+      },
+      {
+        "id": "email_for_calendar",
+        "question": "Excellent! I'll send you a calendar invite. What email should I use?",
+        "field": "email",
+        "type": "text",
+        "required": true,
+        "validation": {
+          "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+        }
+      },
+      {
+        "id": "reminder_preference",
+        "question": "Would you like a text reminder 1 hour before the meeting?",
+        "field": "sms_reminder",
+        "type": "boolean",
+        "required": false
+      },
+      {
+        "id": "questions_for_specialist",
+        "question": "Is there anything specific you'd like to discuss with the specialist?",
+        "field": "consultation_notes",
+        "type": "text",
+        "required": false
+      }
+    ],
+    "objection_handling": [
+      {
+        "trigger": "too busy|no time|schedule is full",
+        "response": "I totally understand - you're running a business! The good news is this consultation is only 15 minutes, and we can do it over the phone at whatever time is most convenient for you. We even have early morning and evening slots available. What would work better for you?"
+      },
+      {
+        "trigger": "not sure|need to think|call back later",
+        "response": "Absolutely, no pressure at all. Many of our clients like to at least get on the calendar so they don't lose their spot, and you can always reschedule if needed. Would you like me to hold a tentative time for you this week?"
+      },
+      {
+        "trigger": "just send information|email me details",
+        "response": "I'd be happy to send you information via email. However, our specialists can answer questions specific to your business and situation in real-time, which most people find more helpful than reading through documents. How about we schedule just 15 minutes, and if you want to cancel after reviewing the email, no problem at all?"
+      },
+      {
+        "trigger": "already applied|working with someone else",
+        "response": "That's great that you're exploring your options! Many business owners like to compare offers before making a decision. Would it make sense to at least hear what we can offer so you can make the best choice for your business?"
+      },
+      {
+        "trigger": "what will we discuss|what's the meeting about",
+        "response": "Great question! During the 15-minute consultation, our specialist will review your business situation, discuss funding options available to you, explain our process and timeline, and answer any questions you have. There's absolutely no obligation - it's just an information session to see if we're a good fit."
+      },
+      {
+        "trigger": "is this a sales call|trying to sell me",
+        "response": "I appreciate your directness! This is a consultation to see if we can help you with your funding needs. Our specialist will share information about our programs, but there's zero pressure to move forward. We only work with businesses where there's a mutual fit. Fair enough?"
+      }
+    ],
+    "closing": {
+      "qualified": "Perfect, {{contact_name}}! I've got you scheduled for {{appointment_datetime}} with {{specialist_name}}, one of our senior funding specialists. You'll receive a calendar invite at {{email}}, and I'll send you a text reminder an hour before if you opted in. The specialist will call you at {{phone}} at the scheduled time. Is there anything else I can help you with?",
+      "unqualified": "Thanks so much for your time, {{contact_name}}. I understand the timing isn't quite right. I'll make a note to follow up with you in {{follow_up_weeks}} weeks to see if things have changed. In the meantime, feel free to reach out to us at any time if your situation changes. Sound good?",
+      "undecided": "No problem, {{contact_name}}. I understand you need to {{objection_reason}}. What I'll do is send you an email with some information about what we'd cover in the consultation. Take your time reviewing it, and if you'd like to schedule, just reply to that email or give us a call. We're here when you're ready!"
+    }
+  },
+  "qualification_rules": {
+    "criteria": [
+      {
+        "field": "still_interested",
+        "operator": "equals",
+        "value": true,
+        "required": true,
+        "weight": 40
+      },
+      {
+        "field": "urgency",
+        "operator": "in_list",
+        "value": ["immediately", "within_1_week", "within_2_weeks", "within_1_month"],
+        "required": true,
+        "weight": 30
+      },
+      {
+        "field": "phone_confirmed",
+        "operator": "equals",
+        "value": true,
+        "required": true,
+        "weight": 15
+      },
+      {
+        "field": "appointment_datetime",
+        "operator": "not_equals",
+        "value": "",
+        "required": true,
+        "weight": 15
+      }
+    ],
+    "qualification_threshold": 75,
+    "auto_disqualify": [
+      {
+        "field": "still_interested",
+        "operator": "equals",
+        "value": false
+      },
+      {
+        "field": "urgency",
+        "operator": "equals",
+        "value": "just_exploring"
+      }
+    ]
+  },
+  "integration": {
+    "crm": {
+      "provider": "hubspot",
+      "actions": {
+        "qualified": {
+          "create_lead": true,
+          "assign_to": "funding_specialists",
+          "tags": [
+            "appointment_scheduled",
+            "consultation_booked",
+            "hot_lead"
+          ],
+          "send_notification": true
+        },
+        "unqualified": {
+          "create_lead": false,
+          "add_to_nurture": true,
+          "nurture_campaign_id": "appointment_nurture_2week"
+        }
+      },
+      "field_mapping": {
+        "contact_name": "firstname,lastname",
+        "business_name": "company",
+        "phone": "phone",
+        "email": "email",
+        "funding_amount_requested": "deal_amount",
+        "urgency": "deal_stage",
+        "appointment_datetime": "meeting_datetime",
+        "consultation_notes": "notes",
+        "sms_reminder": "sms_opt_in"
+      }
+    },
+    "notifications": {
+      "email": [
+        "chris@resultantai.com",
+        "appointments@velocitymca.com"
+      ],
+      "sms": [
+        "+15551234567"
+      ],
+      "webhook": "https://api.velocitymca.com/webhooks/appointment_booked"
+    }
+  },
+  "analytics": {
+    "track_metrics": [
+      "call_duration",
+      "qualification_rate",
+      "drop_off_point",
+      "objection_frequency",
+      "conversion_time"
+    ],
+    "reporting_interval": "daily"
+  },
+  "compliance": {
+    "record_calls": true,
+    "recording_disclosure": "This call may be recorded for quality assurance and training purposes.",
+    "gdpr_compliant": true,
+    "data_retention_days": 730
+  }
+}
