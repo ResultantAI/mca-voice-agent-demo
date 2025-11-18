@@ -1085,6 +1085,132 @@
             text-decoration: underline;
         }
 
+        /* Exit Intent Popup */
+        .exit-popup {
+            display: none;
+            position: fixed;
+            z-index: 10000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            align-items: center;
+            justify-content: center;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        .exit-popup.active {
+            display: flex;
+        }
+
+        .exit-popup-content {
+            background: var(--white);
+            border-radius: 20px;
+            padding: 3rem;
+            max-width: 600px;
+            width: 90%;
+            position: relative;
+            text-align: center;
+            animation: slideUp 0.4s ease-out;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .exit-popup-close {
+            position: absolute;
+            top: 1.5rem;
+            right: 1.5rem;
+            background: var(--gray-medium);
+            border: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-size: 2rem;
+            color: var(--gray-dark);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+            line-height: 1;
+        }
+
+        .exit-popup-close:hover {
+            background: var(--danger);
+            color: var(--white);
+            transform: rotate(90deg);
+        }
+
+        .exit-popup-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .exit-popup-content h2 {
+            font-size: 2.5rem;
+            color: var(--navy);
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .exit-popup-subtitle {
+            font-size: 1.25rem;
+            color: var(--gray-dark);
+            margin-bottom: 2rem;
+        }
+
+        .exit-popup-benefits {
+            text-align: left;
+            margin-bottom: 2rem;
+            background: var(--gray-light);
+            padding: 1.5rem;
+            border-radius: 12px;
+        }
+
+        .exit-benefit {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            color: var(--gray-dark);
+        }
+
+        .exit-benefit:last-child {
+            margin-bottom: 0;
+        }
+
+        .benefit-icon {
+            font-size: 1.5rem;
+            flex-shrink: 0;
+        }
+
+        .exit-popup-cta {
+            display: inline-block;
+            padding: 1.25rem 2.5rem;
+            background: linear-gradient(135deg, var(--success) 0%, #38A169 100%);
+            color: var(--white);
+            font-size: 1.25rem;
+            font-weight: 700;
+            text-decoration: none;
+            border-radius: 50px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(72, 187, 120, 0.4);
+            margin-bottom: 1rem;
+        }
+
+        .exit-popup-cta:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(72, 187, 120, 0.6);
+        }
+
+        .exit-popup-footer {
+            font-size: 0.875rem;
+            color: var(--gray-dark);
+            font-style: italic;
+        }
+
         /* Global Transitions */
         * {
             transition: color 0.3s ease, background-color 0.3s ease, transform 0.3s ease;
@@ -1216,6 +1342,23 @@
 
             .calculator-results {
                 grid-template-columns: 1fr;
+            }
+
+            .exit-popup-content {
+                padding: 2rem 1.5rem;
+            }
+
+            .exit-popup-content h2 {
+                font-size: 1.75rem;
+            }
+
+            .exit-popup-subtitle {
+                font-size: 1rem;
+            }
+
+            .exit-popup-cta {
+                font-size: 1.1rem;
+                padding: 1rem 2rem;
             }
         }
 
@@ -1841,6 +1984,34 @@
         </div>
     </footer>
 
+    <!-- Exit Intent Popup -->
+    <div id="exitPopup" class="exit-popup">
+        <div class="exit-popup-content">
+            <button class="exit-popup-close" onclick="closeExitPopup()">&times;</button>
+            <div class="exit-popup-icon">⚡</div>
+            <h2>Wait! Don't Miss This Opportunity</h2>
+            <p class="exit-popup-subtitle">See how you can save $100K+ annually with AI voice agents</p>
+            <div class="exit-popup-benefits">
+                <div class="exit-benefit">
+                    <span class="benefit-icon">✅</span>
+                    <span>2-3 minute qualification vs 15-20 minutes</span>
+                </div>
+                <div class="exit-benefit">
+                    <span class="benefit-icon">✅</span>
+                    <span>$0.21 per lead vs $35-50</span>
+                </div>
+                <div class="exit-benefit">
+                    <span class="benefit-icon">✅</span>
+                    <span>200+ leads daily vs 20-25</span>
+                </div>
+            </div>
+            <a href="https://meetings.hubspot.com/chris4642" target="_blank" class="exit-popup-cta" onclick="trackExitPopupClick()">
+                📅 Schedule Your Free 15-Min Demo
+            </a>
+            <p class="exit-popup-footer">No commitment • See it live in 15 minutes</p>
+        </div>
+    </div>
+
     <script>
         // Call simulation data
         const callData = {
@@ -2130,6 +2301,58 @@
                 leadVolumeSlider.addEventListener('input', updateROI);
                 currentCostSlider.addEventListener('input', updateROI);
                 updateROI(); // Initial calculation
+            }
+        });
+
+        // Exit Intent Popup
+        let exitPopupShown = false;
+
+        function showExitPopup() {
+            if (!exitPopupShown && !sessionStorage.getItem('exitPopupShown')) {
+                document.getElementById('exitPopup').classList.add('active');
+                document.body.style.overflow = 'hidden';
+                exitPopupShown = true;
+                sessionStorage.setItem('exitPopupShown', 'true');
+            }
+        }
+
+        function closeExitPopup() {
+            document.getElementById('exitPopup').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        function trackExitPopupClick() {
+            console.log('Exit popup CTA clicked');
+            sessionStorage.setItem('exitPopupConverted', 'true');
+        }
+
+        // Detect exit intent
+        document.addEventListener('mouseleave', function(e) {
+            if (e.clientY <= 0) {
+                showExitPopup();
+            }
+        });
+
+        // Also show on mobile after 30 seconds if not shown
+        if (window.innerWidth <= 768) {
+            setTimeout(function() {
+                if (!exitPopupShown && !sessionStorage.getItem('exitPopupShown')) {
+                    showExitPopup();
+                }
+            }, 30000);
+        }
+
+        // Close popup when clicking outside
+        document.getElementById('exitPopup')?.addEventListener('click', function(e) {
+            if (e.target.id === 'exitPopup') {
+                closeExitPopup();
+            }
+        });
+
+        // Close popup on ESC key
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeExitPopup();
             }
         });
 
